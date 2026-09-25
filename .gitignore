@@ -1,69 +1,66 @@
-# Prerequisites
-*.d
+# CMake build trees and generated metadata
+/build/
+/Build/
+/build-*/
+/cmake-build-*/
+/out/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+Makefile
+compile_commands.json
+CTestTestfile.cmake
+Testing/
+/vcpkg_installed/
 
-# Compiled Object files
-*.slo
-*.lo
+# Compiled objects, libraries, and executables
 *.o
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-*.so.*
-
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
+*.lo
+*.slo
 *.la
+*.lai
 *.a
 *.lib
-
-# Executables
+*.dll
+*.dylib
+*.so
+*.so.*
 *.exe
 *.out
 *.app
-
-# Build directories
-build/
-Build/
-build-*/
-
-# CMake generated files
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
-install_manifest.txt
-compile_commands.json
-
-# Temporary files
-*.tmp
-*.log
-*.bak
-*.swp
-
-# vcpkg
-vcpkg_installed/
-
-# debug information files
+*.exp
+*.ilk
+*.pdb
+*.d
 *.dwo
+*.gch
+*.pch
+*.mod
+*.smod
 
-# test output & cache
-Testing/
+# CUDA compiler output and profiler reports
+*.ptx
+*.cubin
+*.fatbin
+*.nvvm
+*.nsys-rep
+*.qdrep
+*.nvvp
+
+# IDE and editor state
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.swp
+*.tmp
+*.bak
+
+# Local CMake configuration and operating-system files
+CMakeUserPresets.json
 .cache/
+.DS_Store
+Thumbs.db
