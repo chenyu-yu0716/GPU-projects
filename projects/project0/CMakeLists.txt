@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.25)
+
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    project(project0_device_query LANGUAGES CXX CUDA)
+    set(CMAKE_CXX_STANDARD 20)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(CMAKE_CXX_EXTENSIONS OFF)
+    set(CMAKE_CUDA_STANDARD 20)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    set(CMAKE_CUDA_EXTENSIONS OFF)
+    find_package(CUDAToolkit REQUIRED)
+endif()
+
+add_executable(project0 main.cpp)
+target_link_libraries(project0 PRIVATE CUDA::cudart)
