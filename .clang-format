@@ -1,0 +1,109 @@
+# .clang-format
+#
+# Base style: LLVM
+# Customized for modern C++ / CUDA projects.
+
+BasedOnStyle: LLVM
+
+# ------------------------------------------------------------
+# Indentation
+# ------------------------------------------------------------
+
+IndentWidth: 4
+ContinuationIndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# Do not add indentation inside namespaces.
+NamespaceIndentation: None
+
+# Align switch case labels with the switch statement.
+IndentCaseLabels: false
+
+# Align public/private/protected with the class declaration.
+AccessModifierOffset: -4
+
+# ------------------------------------------------------------
+# Line width
+# ------------------------------------------------------------
+
+ColumnLimit: 120
+
+# ------------------------------------------------------------
+# Braces
+# ------------------------------------------------------------
+
+# Keep opening braces on the control statement and place else on a new line:
+#
+# if (...) {
+#     ...
+# }
+# else {
+#     ...
+# }
+BreakBeforeBraces: Custom
+
+BraceWrapping:
+  BeforeElse: true
+
+# Automatically add braces to if / else / for / while control statements.
+#
+# if (x)
+#     foo();
+# else
+#     bar();
+#
+# Is formatted as:
+#
+# if (x) {
+#     foo();
+# }
+# else {
+#     bar();
+# }
+InsertBraces: true
+
+# Do not allow single-line if statements.
+AllowShortIfStatementsOnASingleLine: Never
+
+# Do not allow single-line loops.
+AllowShortLoopsOnASingleLine: false
+
+# Empty functions may remain on a single line:
+#
+# Foo::~Foo() {}
+AllowShortFunctionsOnASingleLine: Empty
+
+# ------------------------------------------------------------
+# Pointer / reference alignment
+# ------------------------------------------------------------
+
+# Foo* ptr;
+# Foo& ref;
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+# ------------------------------------------------------------
+# Qualifier alignment
+# ------------------------------------------------------------
+
+# int const value;
+# int const* pointerToConst;     // The pointee is const.
+# int* const constPointer;       // The pointer itself is const.
+# int const& referenceToConst;   // The referred object is const.
+QualifierAlignment: Right
+
+# ------------------------------------------------------------
+# Function arguments / parameters
+# ------------------------------------------------------------
+
+# Once arguments wrap, do not pack multiple arguments onto one line.
+BinPackArguments: false
+BinPackParameters: false
+
+# ------------------------------------------------------------
+# Includes
+# ------------------------------------------------------------
+
+# Prevent clang-format from reordering include directives.
+SortIncludes: Never
