@@ -96,21 +96,6 @@
       }
     },
     {
-      "name": "macos-base",
-      "hidden": true,
-      "inherits": "default",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      },
-      "vendor": {
-        "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
-          "HostOS": "macOS"
-        }
-      }
-    },
-    {
       "name": "windows-vs-debug",
       "displayName": "x64 Debug",
       "description": "Windows Visual Studio debug configuration",
@@ -163,34 +148,6 @@
       "description": "Linux/WSL2 Clang release configuration",
       "inherits": [ "linux-base", "clang-base", "release" ],
       "generator": "Unix Makefiles"
-    },
-    {
-      "name": "macos-xcode-debug",
-      "displayName": "Xcode Debug",
-      "description": "MacOS Xcode debug configuration",
-      "inherits": [ "macos-base", "clang-base", "debug" ],
-      "generator": "Xcode"
-    },
-    {
-      "name": "macos-xcode-release",
-      "displayName": "Xcode Release",
-      "description": "MacOS Xcode release configuration",
-      "inherits": [ "macos-base", "clang-base", "debug" ],
-      "generator": "Xcode"
-    },
-    {
-      "name": "macos-clang-debug",
-      "displayName": "Clang Debug",
-      "description": "MacOS Clang debug configuration",
-      "inherits": [ "macos-base", "clang-base", "debug" ],
-      "generator": "Unix Makefiles"
-    },
-    {
-      "name": "macos-clang-release",
-      "displayName": "Clang Release",
-      "description": "MacOS Clang release configuration",
-      "inherits": [ "macos-base", "clang-base", "release" ],
-      "generator": "Unix Makefiles"
     }
   ],
   "buildPresets": [
@@ -230,15 +187,6 @@
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
-      }
-    },
-    {
-      "name": "macos-base",
-      "hidden": true,
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
       }
     },
     {
@@ -294,30 +242,6 @@
       "displayName": "Clang Release",
       "configurePreset": "linux-clang-release",
       "inherits": [ "linux-base", "multicore" ]
-    },
-    {
-      "name": "macos-xcode-debug",
-      "displayName": "Xcode Debug",
-      "configurePreset": "macos-xcode-debug",
-      "inherits": [ "macos-base", "multi-config-debug" ]
-    },
-    {
-      "name": "macos-xcode-release",
-      "displayName": "Xcode Release",
-      "configurePreset": "macos-xcode-release",
-      "inherits": [ "macos-base", "multi-config-release" ]
-    },
-    {
-      "name": "macos-clang-debug",
-      "displayName": "Clang Debug",
-      "configurePreset": "macos-clang-debug",
-      "inherits": [ "macos-base", "multicore" ]
-    },
-    {
-      "name": "macos-clang-release",
-      "displayName": "Clang Release",
-      "configurePreset": "macos-clang-release",
-      "inherits": [ "macos-base", "multicore" ]
     }
   ]
 }
