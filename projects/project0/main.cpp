@@ -1,209 +1,255 @@
-// CUDA Runtime API device-property query, modelled after NVIDIA's deviceQuery
-// sample.  It intentionally performs no CUDA work beyond querying each device.
-
 #include <cuda_runtime.h>
 
-#include <cstdio>
 #include <cstdlib>
-#include <string>
+#include <format>
+#include <iostream>
+#include <source_location>
 
 namespace {
 
-void checkCuda(cudaError_t status, const char *operation) {
-    if (status == cudaSuccess) {
-        return;
-    }
+#define CHECK_CUDA(call) checkCudaImpl((call), #call)
 
-    std::fprintf(stderr, "%s failed: %s\n", operation, cudaGetErrorString(status));
-    std::exit(EXIT_FAILURE);
+void checkCudaImpl(cudaError_t result, const char* cudaCall,
+    const std::source_location location = std::source_location::current()) {
+    if (result != cudaSuccess) {
+        std::cerr << std::format("CUDA call {} failed at {}:{} in {}: {} ({})\n", cudaCall,
+            location.file_name(), location.line(), location.function_name(),
+            cudaGetErrorName(result), static_cast<unsigned int>(result));
+
+        std::exit(EXIT_FAILURE);
+    }
 }
 
-int coresPerMultiprocessor(int major, int minor) {
-    // CUDA cores per SM for NVIDIA architectures supported by CUDA 12.x.
+template <typename... Args>
+void println(std::format_string<Args...> pattern, Args &&...args) {
+    std::cout << std::format(pattern, std::forward<Args>(args)...) << '\n';
+}
+
+int convertSmVerToCudaCores(int major, int minor) {
+    // This table and its fallback behavior match CUDA Samples'
+    // _ConvertSMVer2Cores helper. CUDA does not expose cores-per-SM directly.
     struct SmToCores {
-        int major;
-        int minor;
+        int sm;
         int cores;
     };
-    constexpr SmToCores kMappings[] = {
-        {2, 0, 32}, {2, 1, 48}, {3, 0, 192}, {3, 5, 192}, {3, 7, 192},
-        {5, 0, 128}, {5, 2, 128}, {5, 3, 128}, {6, 0, 64}, {6, 1, 128},
-        {6, 2, 128}, {7, 0, 64}, {7, 2, 64}, {7, 5, 64}, {8, 0, 64},
-        {8, 6, 128}, {8, 7, 128}, {8, 9, 128}, {9, 0, 128},
+    constexpr SmToCores kCoresPerSm[] = {
+        {0x30, 192}, {0x32, 192}, {0x35, 192}, {0x37, 192}, {0x50, 128},
+        {0x52, 128}, {0x53, 128}, {0x60, 64},  {0x61, 128}, {0x62, 128},
+        {0x70, 64},  {0x72, 64},  {0x75, 64},  {0x80, 64},  {0x86, 128},
+        {0x87, 128}, {0x89, 128}, {0x90, 128}, {0xA0, 128}, {0xA1, 128},
+        {0xA3, 128}, {0xA7, 128}, {0xB0, 128}, {0xC0, 128}, {0xC1, 128},
     };
 
-    for (const SmToCores &mapping : kMappings) {
-        if (mapping.major == major && mapping.minor == minor) {
-            return mapping.cores;
+    for (const SmToCores &smToCores : kCoresPerSm) {
+        if (smToCores.sm == ((major << 4) + minor)) {
+            return smToCores.cores;
         }
     }
+
     return 0;
 }
 
-const char *yesNo(int value) { return value ? "Yes" : "No"; }
-
-const char *computeModeName(int mode) {
-    switch (mode) {
-        case cudaComputeModeDefault:
-            return "Default (multiple host threads can use ::cudaSetDevice() with this device simultaneously)";
-        case cudaComputeModeExclusive:
-            return "Exclusive (only one host thread in one process is able to use ::cudaSetDevice() with this device)";
-        case cudaComputeModeProhibited:
-            return "Prohibited (no host thread can use ::cudaSetDevice() with this device)";
-        case cudaComputeModeExclusiveProcess:
-            return "Exclusive Process (many threads in one process are able to use ::cudaSetDevice() with this device)";
-        default:
-            return "Unknown";
-    }
-}
-
-void printDevice(int device) {
-    cudaDeviceProp property{};
-    checkCuda(cudaSetDevice(device), "cudaSetDevice");
-    checkCuda(cudaGetDeviceProperties(&property, device), "cudaGetDeviceProperties");
+void printDeviceInfo(int device) {
+    CHECK_CUDA(cudaSetDevice(device));
+    cudaDeviceProp property;
+    CHECK_CUDA(cudaGetDeviceProperties(&property, device));
+    println("Device {}: \"{}\"", device, property.name);
 
     int driverVersion = 0;
     int runtimeVersion = 0;
-    checkCuda(cudaDriverGetVersion(&driverVersion), "cudaDriverGetVersion");
-    checkCuda(cudaRuntimeGetVersion(&runtimeVersion), "cudaRuntimeGetVersion");
+    CHECK_CUDA(cudaDriverGetVersion(&driverVersion));
+    CHECK_CUDA(cudaRuntimeGetVersion(&runtimeVersion));
+    println("  CUDA Driver Version / Runtime Version           {}.{} / {}.{}", driverVersion / 1000,
+          (driverVersion % 100) / 10, runtimeVersion / 1000, (runtimeVersion % 100) / 10);
+    println("  CUDA Capability Major/Minor Version Number:     {}.{}", property.major,
+          property.minor);
+    println("  Device PCI Domain ID / Bus ID / Location ID:    {} / {} / {}", property.pciDomainID,
+          property.pciBusID, property.pciDeviceID);
 
-    std::printf("\nDevice %d: \"%s\"\n", device, property.name);
-    std::printf("  CUDA Driver Version / Runtime Version          %d.%d / %d.%d\n",
-                driverVersion / 1000, (driverVersion % 100) / 10,
-                runtimeVersion / 1000, (runtimeVersion % 100) / 10);
-    std::printf("  CUDA Capability Major/Minor version number:    %d.%d\n", property.major, property.minor);
-    std::printf("  Total amount of global memory:                 %.0f MBytes (%llu bytes)\n",
-                static_cast<double>(property.totalGlobalMem) / (1024.0 * 1024.0),
-                static_cast<unsigned long long>(property.totalGlobalMem));
+    println("  Multiprocessor Count:                           {}", property.multiProcessorCount);
 
-    const int coresPerSm = coresPerMultiprocessor(property.major, property.minor);
-    if (coresPerSm != 0) {
-        std::printf("  (%03d) Multiprocessors, (%03d) CUDA Cores/MP:    %d CUDA Cores\n",
-                    property.multiProcessorCount, coresPerSm,
-                    coresPerSm * property.multiProcessorCount);
-    } else {
-        std::printf("  (%03d) Multiprocessors, CUDA Cores/MP:          Unknown\n",
-                    property.multiProcessorCount);
+    if (int coresPerSm = convertSmVerToCudaCores(property.major, property.minor); coresPerSm > 0) {
+        const int totalCudaCores = property.multiProcessorCount * coresPerSm;
+        println("  CUDA Cores per Multiprocessor:                  {}", coresPerSm);
+        println("  Total CUDA Cores:                               {}", totalCudaCores);
+    }
+    else {
+        constexpr int defaultCoresPerSm = 128;  // Fallback value for unknown SM versions
+        const int totalCudaCores = property.multiProcessorCount * defaultCoresPerSm;
+        println("  CUDA Cores per Multiprocessor Estimated:        {}", defaultCoresPerSm);
+        println("  Total CUDA Cores Estimated:                     {}", totalCudaCores);
     }
 
-    int clockRate = 0;
-    int memoryClockRate = 0;
-    int gpuOverlap = 0;
-    int kernelExecTimeout = 0;
-    int computeMode = 0;
-    checkCuda(cudaDeviceGetAttribute(&clockRate, cudaDevAttrClockRate, device), "cudaDevAttrClockRate");
-    checkCuda(cudaDeviceGetAttribute(&memoryClockRate, cudaDevAttrMemoryClockRate, device),
-              "cudaDevAttrMemoryClockRate");
-    checkCuda(cudaDeviceGetAttribute(&gpuOverlap, cudaDevAttrGpuOverlap, device), "cudaDevAttrGpuOverlap");
-    checkCuda(cudaDeviceGetAttribute(&kernelExecTimeout, cudaDevAttrKernelExecTimeout, device),
-              "cudaDevAttrKernelExecTimeout");
-    checkCuda(cudaDeviceGetAttribute(&computeMode, cudaDevAttrComputeMode, device),
-              "cudaDevAttrComputeMode");
+    int singleToDoublePrecisionPerfRatio;
+    CHECK_CUDA(cudaDeviceGetAttribute(&singleToDoublePrecisionPerfRatio,
+                                      cudaDevAttrSingleToDoublePrecisionPerfRatio, device));
+    println("  Single-to-Double Precision Performance Ratio:   {}",
+            singleToDoublePrecisionPerfRatio);
 
-    std::printf("  GPU Max Clock rate:                            %.0f MHz (%.2f GHz)\n",
-                clockRate * 1e-3, clockRate * 1e-6);
-    std::printf("  Memory Clock rate:                             %.0f MHz\n", memoryClockRate * 1e-3);
-    std::printf("  Memory Bus Width:                              %d-bit\n", property.memoryBusWidth);
-    if (property.l2CacheSize != 0) {
-        std::printf("  L2 Cache Size:                                 %d bytes\n", property.l2CacheSize);
-    }
-    std::printf("  Maximum Texture Dimension Size (x,y,z)         1D=(%d), 2D=(%d, %d), 3D=(%d, %d, %d)\n",
-                property.maxTexture1D, property.maxTexture2D[0], property.maxTexture2D[1],
-                property.maxTexture3D[0], property.maxTexture3D[1], property.maxTexture3D[2]);
-    std::printf("  Maximum Layered 1D Texture Size, (num) layers  1D=(%d), %d layers\n",
-                property.maxTexture1DLayered[0], property.maxTexture1DLayered[1]);
-    std::printf("  Maximum Layered 2D Texture Size, (num) layers  2D=(%d, %d), %d layers\n",
-                property.maxTexture2DLayered[0], property.maxTexture2DLayered[1],
-                property.maxTexture2DLayered[2]);
-    std::printf("  Total amount of constant memory:               %zu bytes\n", property.totalConstMem);
-    std::printf("  Total amount of shared memory per block:       %zu bytes\n", property.sharedMemPerBlock);
-    std::printf("  Total shared memory per multiprocessor:        %zu bytes\n", property.sharedMemPerMultiprocessor);
-    std::printf("  Total number of registers available per block: %d\n", property.regsPerBlock);
-    std::printf("  Warp size:                                     %d\n", property.warpSize);
-    std::printf("  Maximum number of threads per multiprocessor:  %d\n", property.maxThreadsPerMultiProcessor);
-    std::printf("  Maximum number of threads per block:           %d\n", property.maxThreadsPerBlock);
-    std::printf("  Max dimension size of a thread block (x,y,z): (%d, %d, %d)\n",
-                property.maxThreadsDim[0], property.maxThreadsDim[1], property.maxThreadsDim[2]);
-    std::printf("  Max dimension size of a grid size    (x,y,z): (%d, %d, %d)\n",
-                property.maxGridSize[0], property.maxGridSize[1], property.maxGridSize[2]);
-    std::printf("  Maximum memory pitch:                          %zu bytes\n", property.memPitch);
-    std::printf("  Texture alignment:                             %zu bytes\n", property.textureAlignment);
-    std::printf("  Concurrent copy and kernel execution:          %s with %d copy engine(s)\n",
-                yesNo(gpuOverlap), property.asyncEngineCount);
-    std::printf("  Run time limit on kernels:                     %s\n", yesNo(kernelExecTimeout));
-    std::printf("  Integrated GPU sharing Host Memory:            %s\n", yesNo(property.integrated));
-    std::printf("  Support host page-locked memory mapping:       %s\n", yesNo(property.canMapHostMemory));
-    std::printf("  Alignment requirement for Surfaces:            %s\n", yesNo(property.surfaceAlignment));
-    std::printf("  Device has ECC support:                        %s\n", property.ECCEnabled ? "Enabled" : "Disabled");
-#if defined(_WIN32)
-    std::printf("  CUDA Device Driver Mode (TCC or WDDM):         %s\n",
-                property.tccDriver ? "TCC (Tesla Compute Cluster Driver)" : "WDDM (Windows Display Driver Model)");
+    int clockRate;
+    CHECK_CUDA(cudaDeviceGetAttribute(&clockRate, cudaDevAttrClockRate, device));
+    println("  GPU Max Clock Rate:                             {:.0f} MHz ({:.2f} GHz)", clockRate * 1e-3f,
+          clockRate * 1e-6f);
+    println("  Total Amount of Global Memory:                  {:.0f} MBytes ({} bytes)",
+          static_cast<float>(property.totalGlobalMem / 1048576.0f),
+          static_cast<unsigned long long>(property.totalGlobalMem));
+    int memoryClockRate;
+#if CUDART_VERSION >= 13000
+    CHECK_CUDA(cudaDeviceGetAttribute(&memoryClockRate, cudaDevAttrMemoryClockRate, device));
+#else
+    memoryClockRate = property.memoryClockRate;
 #endif
-    std::printf("  Device supports Unified Addressing (UVA):      %s\n", yesNo(property.unifiedAddressing));
-    std::printf("  Device supports Managed Memory:                %s\n", yesNo(property.managedMemory));
-    std::printf("  Device supports Compute Preemption:            %s\n", yesNo(property.computePreemptionSupported));
-    std::printf("  Supports Cooperative Kernel Launch:            %s\n", yesNo(property.cooperativeLaunch));
-    std::printf("  Supports MultiDevice Co-op Kernel Launch:      %s\n", yesNo(property.cooperativeMultiDeviceLaunch));
-    std::printf("  Device PCI Domain ID / Bus ID / location ID:   %d / %d / %d\n",
-                property.pciDomainID, property.pciBusID, property.pciDeviceID);
-    std::printf("  Compute Mode:\n     < %s >\n", computeModeName(computeMode));
+    println("  Memory Clock Rate:                              {:.0f} MHz", memoryClockRate * 1e-3f);
+    println("  Memory Bus Width:                               {}-bit", property.memoryBusWidth);
+    println("  L2 Cache Size:                                  {} bytes", property.l2CacheSize);
+    println("  Total Amount of Constant Memory:                {} bytes", property.totalConstMem);
+    println("  Total Amount of Shared Memory per Block:        {} bytes", property.sharedMemPerBlock);
+
+    int maxSharedMemoryPerBlockOptin;
+    CHECK_CUDA(cudaDeviceGetAttribute(&maxSharedMemoryPerBlockOptin,
+                                      cudaDevAttrMaxSharedMemoryPerBlockOptin, device));
+    println("  Maximum Opt-In Shared Memory per Block:         {} bytes", maxSharedMemoryPerBlockOptin);
+    println("  Total Shared Memory per Multiprocessor:         {} bytes", property.sharedMemPerMultiprocessor);
+    println("  Total Number of Registers Available per Block:  {}", property.regsPerBlock);
+    int maxRegistersPerMultiprocessor;
+    CHECK_CUDA(cudaDeviceGetAttribute(&maxRegistersPerMultiprocessor,
+                                      cudaDevAttrMaxRegistersPerMultiprocessor, device));
+    println("  Maximum Number of Registers per Multiprocessor: {}", maxRegistersPerMultiprocessor);
+#if CUDART_VERSION >= 11000
+    println("  Maximum Number of Blocks per Multiprocessor:    {}", property.maxBlocksPerMultiProcessor);
+#endif
+    println("  Warp Size:                                      {}", property.warpSize);
+    println("  Maximum Number of Threads per Multiprocessor:   {}", property.maxThreadsPerMultiProcessor);
+    println("  Maximum Number of Threads per Block:            {}", property.maxThreadsPerBlock);
+    println("  Max Dimension Sizes of a Thread Block:          {}, {}, {}", property.maxThreadsDim[0],
+          property.maxThreadsDim[1], property.maxThreadsDim[2]);
+    println("  Max Dimension Sizes of a Grid Size:             {}, {}, {}", property.maxGridSize[0],
+          property.maxGridSize[1], property.maxGridSize[2]);
+
+    println("  Maximum 1D Texture Dimension Size               {}", property.maxTexture1D);
+    println("  Maximum 2D Texture Dimension Size               {} x {}", property.maxTexture2D[0],
+          property.maxTexture2D[1]);
+    println("  Maximum 3D Texture Dimension Size               {} x {} x {}", property.maxTexture3D[0],
+          property.maxTexture3D[1], property.maxTexture3D[2]);
+    println("  Maximum Layered 1D Texture Size                 {}, {} layers",
+          property.maxTexture1DLayered[0], property.maxTexture1DLayered[1]);
+    println("  Maximum Layered 2D Texture Size                 {} x {}, {} layers",
+          property.maxTexture2DLayered[0], property.maxTexture2DLayered[1],
+          property.maxTexture2DLayered[2]);
+    println("  Maximum Memory Pitch:                           {} bytes", property.memPitch);
+    println("  Texture Alignment:                              {} bytes", property.textureAlignment);
+    println("  Surface Alignment Requirement:                  {}", property.surfaceAlignment ? "Yes" : "No");
+
+    int gpuOverlap;
+    CHECK_CUDA(cudaDeviceGetAttribute(&gpuOverlap, cudaDevAttrGpuOverlap, device));
+    println("  Concurrent Copy and Kernel Execution:           {} with {} Copy Engine(s)",
+          gpuOverlap ? "Yes" : "No", property.asyncEngineCount);
+
+    int kernelExecTimeout;
+    CHECK_CUDA(cudaDeviceGetAttribute(&kernelExecTimeout, cudaDevAttrKernelExecTimeout, device));
+    println("  Runtime Limit on Kernels:                       {}", kernelExecTimeout ? "Yes" : "No");
+
+    println("  Integrated GPU Sharing Host Memory:             {}", property.integrated ? "Yes" : "No");
+    println("  Supports Host Page-Locked Memory Mapping:       {}", property.canMapHostMemory ? "Yes" : "No");
+    int pageableMemoryAccess;
+    CHECK_CUDA(cudaDeviceGetAttribute(&pageableMemoryAccess, cudaDevAttrPageableMemoryAccess, device));
+    println("  Device Supports Pageable Memory Access:         {}", pageableMemoryAccess ? "Yes" : "No");
+    int hostNativeAtomicSupported;
+    CHECK_CUDA(cudaDeviceGetAttribute(&hostNativeAtomicSupported,
+                                      cudaDevAttrHostNativeAtomicSupported, device));
+    println("  Device Supports Host Native Atomic Operations:  {}",
+            hostNativeAtomicSupported ? "Yes" : "No");
+    println("  Device Has ECC Support:                         {}", property.ECCEnabled ? "Enabled" : "Disabled");
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+    println("  CUDA Device Driver Mode (TCC or WDDM):          {}",
+          property.tccDriver ? "TCC (Tesla Compute Cluster Driver)" : "WDDM (Windows Display Driver Model)");
+#endif
+    println("  Device Supports Unified Addressing (UVA):       {}", property.unifiedAddressing ? "Yes" : "No");
+    println("  Device Supports Managed Memory:                 {}", property.managedMemory ? "Yes" : "No");
+    int concurrentManagedAccess;
+    CHECK_CUDA(cudaDeviceGetAttribute(&concurrentManagedAccess,
+                                      cudaDevAttrConcurrentManagedAccess, device));
+    println("  Device Supports Concurrent Managed Access:      {}",
+            concurrentManagedAccess ? "Yes" : "No");
+    println("  Device Supports Stream Priorities:              {}",
+            property.streamPrioritiesSupported ? "Yes" : "No");
+    println("  Device Supports Compute Preemption:             {}",
+          property.computePreemptionSupported ? "Yes" : "No");
+    println("  Device Supports Cooperative Kernel Launch:      {}", property.cooperativeLaunch ? "Yes" : "No");
+
+    const char *computeModeNames[] = {
+        "Default (multiple host threads can use ::cudaSetDevice() with device simultaneously)",
+        "Exclusive (only one host thread in one process is able to use ::cudaSetDevice() with this device)",
+        "Prohibited (no host thread can use ::cudaSetDevice() with this device)",
+        "Exclusive Process (many threads in one process is able to use ::cudaSetDevice() with this device)",
+    };
+    int computeMode;
+    CHECK_CUDA(cudaDeviceGetAttribute(&computeMode, cudaDevAttrComputeMode, device));
+    println("  Compute Mode:");
+    println("     < {} >", computeModeNames[computeMode]);
+    println("");
 }
 
-void printPeerAccess(int deviceCount) {
+void printPeerAccessInfo(int deviceCount) {
     if (deviceCount < 2) {
         return;
     }
 
-    for (int source = 0; source < deviceCount; ++source) {
-        cudaDeviceProp sourceProperty{};
-        checkCuda(cudaGetDeviceProperties(&sourceProperty, source), "cudaGetDeviceProperties");
-        for (int destination = 0; destination < deviceCount; ++destination) {
-            if (source == destination) {
-                continue;
+    cudaDeviceProp properties[64];
+    int gpuIds[64];
+    int peerCapableGpuCount = 0;
+    for (int device = 0; device < deviceCount; ++device) {
+        CHECK_CUDA(cudaGetDeviceProperties(&properties[device], device));
+        if ((properties[device].major >= 2)
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+            && properties[device].tccDriver
+#endif
+        ) {
+            gpuIds[peerCapableGpuCount++] = device;
+        }
+    }
+
+    if (peerCapableGpuCount >= 2) {
+        for (int source = 0; source < peerCapableGpuCount; ++source) {
+            for (int destination = 0; destination < peerCapableGpuCount; ++destination) {
+                if (gpuIds[source] == gpuIds[destination]) {
+                    continue;
+                }
+
+                int canAccessPeer;
+                CHECK_CUDA(cudaDeviceCanAccessPeer(&canAccessPeer, gpuIds[source], gpuIds[destination]));
+                println("> Peer Access from {} (GPU{}) -> {} (GPU{}) : {}", properties[gpuIds[source]].name,
+                      gpuIds[source], properties[gpuIds[destination]].name, gpuIds[destination],
+                      canAccessPeer ? "Yes" : "No");
             }
-            int canAccessPeer = 0;
-            checkCuda(cudaDeviceCanAccessPeer(&canAccessPeer, source, destination), "cudaDeviceCanAccessPeer");
-            cudaDeviceProp destinationProperty{};
-            checkCuda(cudaGetDeviceProperties(&destinationProperty, destination), "cudaGetDeviceProperties");
-            std::printf("> Peer access from %s (GPU%d) -> %s (GPU%d) : %s\n",
-                        sourceProperty.name, source, destinationProperty.name, destination,
-                        yesNo(canAccessPeer));
         }
     }
 }
 
-}  // namespace
+}
 
-int main(int argc, char **argv) {
-    std::printf("%s Starting...\n\n", argc > 0 ? argv[0] : "deviceQuery");
-    std::printf(" CUDA Device Query (Runtime API) version (CUDART static linking)\n\n");
+int main() {
+    println("Device Query Starting...\n");
+    println(" CUDA Device Query (Runtime API) version (CUDART static linking)\n");
 
     int deviceCount = 0;
-    const cudaError_t status = cudaGetDeviceCount(&deviceCount);
-    if (status != cudaSuccess) {
-        std::printf("cudaGetDeviceCount returned %d\n-> %s\n", static_cast<int>(status), cudaGetErrorString(status));
-        std::printf("Result = FAIL\n");
+    const cudaError_t error = cudaGetDeviceCount(&deviceCount);
+    if (error != cudaSuccess) {
+        println("cudaGetDeviceCount returned {}", static_cast<int>(error));
+        println("-> {}", cudaGetErrorString(error));
         return EXIT_FAILURE;
     }
-
     if (deviceCount == 0) {
-        std::printf("There are no available device(s) that support CUDA\n");
+        println("There are no available device(s) that support CUDA\n");
     } else {
-        std::printf("Detected %d CUDA Capable device(s)\n", deviceCount);
+        println("Detected {} CUDA Capable device(s)\n", deviceCount);
     }
-    for (int device = 0; device < deviceCount; ++device) {
-        printDevice(device);
-    }
-    printPeerAccess(deviceCount);
 
-    int driverVersion = 0;
-    int runtimeVersion = 0;
-    checkCuda(cudaDriverGetVersion(&driverVersion), "cudaDriverGetVersion");
-    checkCuda(cudaRuntimeGetVersion(&runtimeVersion), "cudaRuntimeGetVersion");
-    std::printf("\ndeviceQuery, CUDA Driver = CUDART, CUDA Driver Version = %d.%d, "
-                "CUDA Runtime Version = %d.%d, NumDevs = %d\n",
-                driverVersion / 1000, (driverVersion % 100) / 10,
-                runtimeVersion / 1000, (runtimeVersion % 100) / 10, deviceCount);
-    std::printf("Result = PASS\n");
+    for (int device = 0; device < deviceCount; ++device) {
+        printDeviceInfo(device);
+    }
+
+    printPeerAccessInfo(deviceCount);
+
     return EXIT_SUCCESS;
 }
