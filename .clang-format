@@ -30,6 +30,18 @@ AccessModifierOffset: -4
 ColumnLimit: 120
 
 # ------------------------------------------------------------
+# Constructor initializer lists
+# ------------------------------------------------------------
+
+# Put every initializer on its own line and align leading commas with the colon:
+#
+# Foo::Foo()
+#     : m_first{first}
+#     , m_second{second} {}
+PackConstructorInitializers: Never
+BreakConstructorInitializers: BeforeComma
+
+# ------------------------------------------------------------
 # Braces
 # ------------------------------------------------------------
 
