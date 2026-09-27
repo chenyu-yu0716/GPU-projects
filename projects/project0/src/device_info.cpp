@@ -3,9 +3,7 @@
 #include <cpu/utility.h>
 #include <gpu/utility.h>
 
-namespace {
-
-int convertSmVerToCudaCores(int major, int minor) {
+static int convertSmVerToCudaCores(int major, int minor) {
     // This table and its fallback behavior match CUDA Samples'
     // _ConvertSMVer2Cores helper. CUDA does not expose cores-per-SM directly.
     struct SmToCores {
@@ -27,8 +25,6 @@ int convertSmVerToCudaCores(int major, int minor) {
 
     return 0;
 }
-
-} // namespace
 
 void printDeviceInfo(int device) {
     CHECK_CUDA(cudaSetDevice(device));
