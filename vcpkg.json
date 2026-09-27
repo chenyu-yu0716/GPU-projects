@@ -1,0 +1,16 @@
+{
+  "name": "gpu-projects",
+  "version-string": "1.0.0",
+  "dependencies": [
+    {
+      "name": "glad",
+      "features": [
+        "extensions",
+        "gl-api-46",
+        "loader"
+      ]
+    },
+    "glfw3",
+    "glm"
+  ]
+}
