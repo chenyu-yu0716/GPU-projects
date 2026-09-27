@@ -1,0 +1,30 @@
+file(REMOVE_RECURSE "@PROJECT_SUBMISSION_STAGING_DIR@")
+file(MAKE_DIRECTORY "@PROJECT_SUBMISSION_STAGING_DIR@")
+
+file(COPY "@PROJECT_SUBMISSION_SOURCE_DIR@/" DESTINATION "@PROJECT_SUBMISSION_STAGING_DIR@"
+     PATTERN "*.zip" EXCLUDE)
+
+# Remove generated trees explicitly before adding the selected base modules
+# below.
+file(REMOVE_RECURSE
+     "@PROJECT_SUBMISSION_STAGING_DIR@/base"
+     "@PROJECT_SUBMISSION_STAGING_DIR@/build"
+     "@PROJECT_SUBMISSION_STAGING_DIR@/Build"
+     "@PROJECT_SUBMISSION_STAGING_DIR@/out"
+     "@PROJECT_SUBMISSION_STAGING_DIR@/submission"
+     "@PROJECT_SUBMISSION_STAGING_DIR@/CMakeFiles"
+     "@PROJECT_SUBMISSION_STAGING_DIR@/.vs"
+     "@PROJECT_SUBMISSION_STAGING_DIR@/.vscode")
+file(REMOVE
+     "@PROJECT_SUBMISSION_STAGING_DIR@/CMakeCache.txt"
+     "@PROJECT_SUBMISSION_STAGING_DIR@/cmake_install.cmake"
+     "@PROJECT_SUBMISSION_STAGING_DIR@/Makefile")
+
+set(project_submission_base_modules "@PROJECT_SUBMISSION_BASE_MODULES@")
+if(project_submission_base_modules)
+    file(MAKE_DIRECTORY "@PROJECT_SUBMISSION_STAGING_DIR@/base")
+    foreach(project_submission_base_module IN LISTS project_submission_base_modules)
+        file(COPY "@PROJECT_SUBMISSION_BASE_DIR@/${project_submission_base_module}"
+             DESTINATION "@PROJECT_SUBMISSION_STAGING_DIR@/base")
+    endforeach()
+endif()

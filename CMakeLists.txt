@@ -22,6 +22,8 @@ endif()
 
 find_package(CUDAToolkit REQUIRED)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/ProjectSubmission.cmake")
+
 # Each example owns its target definition in its CMakeLists.txt.
 function(add_cuda_example example_name)
     set(example_dir "${CMAKE_CURRENT_SOURCE_DIR}/examples/${example_name}")
@@ -74,6 +76,11 @@ if(CLANG_FORMAT_EXECUTABLE)
          "${EXAMPLES_DIR}/*.h"
          "${EXAMPLES_DIR}/*.hpp"
          "${EXAMPLES_DIR}/*.cuh"
+         "${CMAKE_CURRENT_SOURCE_DIR}/base/*.cpp"
+         "${CMAKE_CURRENT_SOURCE_DIR}/base/*.cu"
+         "${CMAKE_CURRENT_SOURCE_DIR}/base/*.h"
+         "${CMAKE_CURRENT_SOURCE_DIR}/base/*.hpp"
+         "${CMAKE_CURRENT_SOURCE_DIR}/base/*.cuh"
          "${PROJECTS_DIR}/*.cpp"
          "${PROJECTS_DIR}/*.cu"
          "${PROJECTS_DIR}/*.h"
