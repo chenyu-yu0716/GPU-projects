@@ -2,7 +2,7 @@
 
 #include <cuda_runtime.h>
 
-#include <stdexcept>
+#include <cassert>
 #include <utility>
 
 #include "gpu/utility.h"
@@ -46,9 +46,7 @@ public:
     }
 
     void stop(cudaStream_t stream = nullptr) {
-        if (!m_started) {
-            throw std::logic_error("Timer must be started before it can be stopped");
-        }
+        assert(m_started && "Timer must be started before it can be stopped");
 
         CHECK_CUDA(cudaEventRecord(m_stopEvent, stream));
         CHECK_CUDA(cudaEventSynchronize(m_stopEvent));
@@ -56,9 +54,8 @@ public:
     }
 
     [[nodiscard]] double elapsedMilliseconds() const {
-        if (!m_started || !m_stopped) {
-            throw std::logic_error("GPU timer must be started and stopped before its elapsed time can be queried");
-        }
+        assert(m_started && m_stopped &&
+               "GPU timer must be started and stopped before its elapsed time can be queried");
 
         float elapsedMilliseconds = 0.0f;
         CHECK_CUDA(cudaEventElapsedTime(&elapsedMilliseconds, m_startEvent, m_stopEvent));
