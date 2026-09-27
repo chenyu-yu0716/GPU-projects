@@ -57,6 +57,7 @@ BreakBeforeBraces: Custom
 
 BraceWrapping:
   BeforeElse: true
+  BeforeCatch: true
 
 # Automatically add braces to if / else / for / while control statements.
 #
