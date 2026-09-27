@@ -17,11 +17,11 @@ int main() {
         return EXIT_FAILURE;
     }
     if (deviceCount == 0) {
-        println("There are no available device(s) that support CUDA\n");
+        println("There are no available device(s) that support CUDA");
+        return EXIT_FAILURE;
     }
-    else {
-        println("Detected {} CUDA Capable device(s)\n", deviceCount);
-    }
+
+    println("Detected {} CUDA Capable device(s)\n", deviceCount);
 
     for (int device = 0; device < deviceCount; ++device) {
         printDeviceInfo(device);
