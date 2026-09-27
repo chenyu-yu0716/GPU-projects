@@ -18,16 +18,19 @@ if(NOT COMMAND add_project_submission_target
     include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/ProjectSubmission.cmake")
 endif()
 
-set(PROJECT0_BASE_MODULES gpu)
+set(PROJECT0_BASE_MODULES cpu gpu)
 set(PROJECT0_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/base")
 if(NOT IS_DIRECTORY "${PROJECT0_BASE_DIR}")
     get_filename_component(PROJECT0_BASE_DIR
                            "${CMAKE_CURRENT_SOURCE_DIR}/../../base" ABSOLUTE)
 endif()
-if(NOT EXISTS "${PROJECT0_BASE_DIR}/gpu/utility.h")
-    message(FATAL_ERROR "Unable to find base/gpu/utility.h")
+if(NOT EXISTS "${PROJECT0_BASE_DIR}/cpu/utility.h"
+   OR NOT EXISTS "${PROJECT0_BASE_DIR}/gpu/utility.h")
+    message(FATAL_ERROR "Unable to find base CPU and GPU utility headers")
 endif()
-set(PROJECT0_BASE_HEADERS "${PROJECT0_BASE_DIR}/gpu/utility.h")
+set(PROJECT0_BASE_HEADERS
+    "${PROJECT0_BASE_DIR}/cpu/utility.h"
+    "${PROJECT0_BASE_DIR}/gpu/utility.h")
 
 file(GLOB_RECURSE PROJECT0_SOURCES CONFIGURE_DEPENDS
      "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
