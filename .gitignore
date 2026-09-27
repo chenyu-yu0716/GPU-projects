@@ -12,6 +12,7 @@ Makefile
 compile_commands.json
 CTestTestfile.cmake
 Testing/
+/vcpkg/
 /vcpkg_installed/
 
 # Compiled objects, libraries, and executables
