@@ -9,21 +9,30 @@ class GraphicsContext {
 public:
     GraphicsContext(std::pair<int, int> const& minimumVersion);
 
-    ~GraphicsContext();
+    ~GraphicsContext() = default;
+
+    std::pair<int, int> getDriverVersion() const noexcept {
+        return m_driverVersion;
+    }
+
+    int getMajorVersion() const noexcept {
+        return m_driverVersion.first;
+    }
+
+    int getMinorVersion() const noexcept {
+        return m_driverVersion.second;
+    }
 
     void init(GLFWwindow* window);
-
-    int getMajorVersion() const noexcept;
-
-    int getMinorVersion() const noexcept;
 
     void restoreDepthStates();
 
     void restoreStencilStates();
 
 private:
-    std::pair<int, int> m_version;
+    std::pair<int, int> m_driverVersion;
 
+private:
     bool checkVersion(GLFWwindow* window);
 
     bool registerDebugOutput();

@@ -1,6 +1,8 @@
 #include "graphics/graphics_context.h"
 
 #include <algorithm>
+#include <array>
+#include <format>
 #include <iostream>
 #include <stdexcept>
 
@@ -18,10 +20,49 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 #endif
 
 namespace gfx {
-GraphicsContext::GraphicsContext(std::pair<int, int> const& minVersion)
-    : m_version{std::max(minVersion, std::pair{4, 6})} {}
 
-GraphicsContext::~GraphicsContext() {}
+GraphicsContext::GraphicsContext(std::pair<int, int> const& minimumVersion)
+    : m_driverVersion{4, 5} {
+    constexpr std::array validVersions{
+        std::pair{1, 0}, std::pair{1, 1}, std::pair{1, 2}, std::pair{1, 3}, std::pair{1, 4},
+        std::pair{1, 5}, std::pair{2, 0}, std::pair{2, 1}, std::pair{3, 0}, std::pair{3, 1},
+        std::pair{3, 2}, std::pair{3, 3}, std::pair{4, 0}, std::pair{4, 1}, std::pair{4, 2},
+        std::pair{4, 3}, std::pair{4, 4}, std::pair{4, 5}, std::pair{4, 6},
+    };
+
+    if (std::find(validVersions.begin(), validVersions.end(), minimumVersion) == validVersions.end()) {
+        std::cerr << std::format("OpenGL {}.{} is not a valid desktop OpenGL version;\n"
+                                 "Using OpenGL {}.{} instead.\n",
+                                 minimumVersion.first,
+                                 minimumVersion.second,
+                                 m_driverVersion.first,
+                                 m_driverVersion.second);
+    }
+    else if (minimumVersion < m_driverVersion) {
+        std::cerr << std::format("OpenGL {}.{} is below the required version for DSA support;\n"
+                                 "Using OpenGL {}.{} instead.\n",
+                                 minimumVersion.first,
+                                 minimumVersion.second,
+                                 m_driverVersion.first,
+                                 m_driverVersion.second);
+    }
+    else {
+        m_driverVersion = minimumVersion;
+    }
+
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, m_driverVersion.first);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, m_driverVersion.second);
+
+#ifndef NDEBUG
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+#endif
+
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+#endif
+}
 
 void GraphicsContext::init(GLFWwindow* window) {
     glfwMakeContextCurrent(window);
@@ -36,39 +77,40 @@ void GraphicsContext::init(GLFWwindow* window) {
     }
 
     std::cout << "OpenGL\n";
-    std::cout << "+ version:     " << reinterpret_cast<char const*>(glGetString(GL_VERSION)) << '\n';
-    std::cout << "+ renderer:    " << reinterpret_cast<char const*>(glGetString(GL_RENDERER)) << '\n';
-    std::cout << "+ glsl:        " << reinterpret_cast<char const*>(glGetString(GL_SHADING_LANGUAGE_VERSION)) << '\n';
+    std::cout << std::format("+ version:     {}\n", reinterpret_cast<char const*>(glGetString(GL_VERSION)));
+    std::cout << std::format("+ renderer:    {}\n", reinterpret_cast<char const*>(glGetString(GL_RENDERER)));
+    std::cout << std::format("+ glsl:        {}\n",
+                             reinterpret_cast<char const*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
 
     GLint maxBlockSize{};
     glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxBlockSize);
-    std::cout << "+ ubo limit:   " << maxBlockSize << " bytes\n";
+    std::cout << std::format("+ ubo limit:   {} bytes\n", maxBlockSize);
 
-    std::cout << "+ max texture\n";
+    std::cout << std::format("+ max texture\n");
     GLint maxVertexTextureUint{};
     glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxVertexTextureUint);
-    std::cout << "  + vertex:    " << maxVertexTextureUint << '\n';
+    std::cout << std::format("  + vertex:    {}\n", maxVertexTextureUint);
 
     GLint maxFragmentTextureUint{};
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxFragmentTextureUint);
-    std::cout << "  + fragment:  " << maxFragmentTextureUint << '\n';
+    std::cout << std::format("  + fragment:  {}\n", maxFragmentTextureUint);
 
     GLint maxCombinedTextureUint{};
     glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxCombinedTextureUint);
-    std::cout << "  + total:     " << maxCombinedTextureUint << '\n';
+    std::cout << std::format("  + total:     {}\n", maxCombinedTextureUint);
 
-    std::cout << "+ max image\n";
+    std::cout << std::format("+ max image\n");
     GLint maxVertexImageUint{};
     glGetIntegerv(GL_MAX_VERTEX_IMAGE_UNIFORMS, &maxVertexImageUint);
-    std::cout << "  + vertex: " << maxVertexImageUint << '\n';
+    std::cout << std::format("  + vertex: {}\n", maxVertexImageUint);
 
     GLint maxFragmentImageUint{};
     glGetIntegerv(GL_MAX_FRAGMENT_IMAGE_UNIFORMS, &maxFragmentImageUint);
-    std::cout << "  + fragment: " << maxFragmentImageUint << '\n';
+    std::cout << std::format("  + fragment: {}\n", maxFragmentImageUint);
 
     GLint maxTextureBufferSize{};
     glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE, &maxTextureBufferSize);
-    std::cout << "+ texture buffer limit: " << maxTextureBufferSize << " bytes\n\n";
+    std::cout << std::format("+ texture buffer limit: {} bytes\n\n", maxTextureBufferSize);
 
     // disable dither for performance
     glDisable(GL_DITHER);
@@ -83,14 +125,6 @@ void GraphicsContext::init(GLFWwindow* window) {
 #ifndef NDEBUG
     registerDebugOutput();
 #endif
-}
-
-int GraphicsContext::getMajorVersion() const noexcept {
-    return m_version.first;
-}
-
-int GraphicsContext::getMinorVersion() const noexcept {
-    return m_version.second;
 }
 
 void GraphicsContext::restoreDepthStates() {
@@ -128,12 +162,13 @@ bool GraphicsContext::checkVersion(GLFWwindow* window) {
         return false;
     }
 
-    if (majorVersion < m_version.first || (majorVersion == m_version.first && minorVersion < m_version.second)) {
+    if (majorVersion < m_driverVersion.first ||
+        (majorVersion == m_driverVersion.first && minorVersion < m_driverVersion.second)) {
         return false;
     }
 
-    m_version.first = majorVersion;
-    m_version.second = minorVersion;
+    m_driverVersion.first = majorVersion;
+    m_driverVersion.second = minorVersion;
 
     return true;
 }
@@ -203,20 +238,20 @@ static void APIENTRY debugCallback(GLenum source,
         break;
     }
 
-    std::string msg{message};
+    std::string const msg{message};
+    std::ostream* output = nullptr;
     switch (severity) {
     case GL_DEBUG_SEVERITY_HIGH:
-        std::cerr << "OpenGL " << sourceStr << " (" << typeStr << "): " << msg << '\n';
-        break;
     case GL_DEBUG_SEVERITY_MEDIUM:
-        std::cerr << "OpenGL " << sourceStr << " (" << typeStr << "): " << msg << '\n';
+        output = &std::cerr;
         break;
     case GL_DEBUG_SEVERITY_LOW:
-        std::cout << "OpenGL " << sourceStr << " (" << typeStr << "): " << msg << '\n';
-        break;
     case GL_DEBUG_SEVERITY_NOTIFICATION:
-        std::cout << "OpenGL " << sourceStr << " (" << typeStr << "): " << msg << '\n';
+        output = &std::cout;
         break;
+    }
+    if (output != nullptr) {
+        *output << std::format("OpenGL {} ({}): {}\n", sourceStr, typeStr, msg);
     }
 
 #ifdef _MSC_VER
@@ -227,7 +262,7 @@ static void APIENTRY debugCallback(GLenum source,
 }
 
 bool GraphicsContext::registerDebugOutput() {
-    if (m_version.first < 4 || m_version.second < 3) {
+    if (m_driverVersion.first < 4 || m_driverVersion.second < 3) {
         return false;
     }
 
