@@ -7,8 +7,11 @@
 
 namespace gfx {
 Texture2D::Texture2D(Specification const& spec, void const* data)
-    : Texture{spec.format}, m_width{spec.width}, m_height{spec.height}, m_mipmapLevels{1},
-      m_immutable{spec.isImmutable} {
+    : Texture{spec.format}
+    , m_width{spec.width}
+    , m_height{spec.height}
+    , m_mipmapLevels{1}
+    , m_immutable{spec.isImmutable} {
     if (m_width == 0) {
         throw std::runtime_error("Invalid texture width");
     }

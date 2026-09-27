@@ -7,8 +7,12 @@
 
 namespace gfx {
 Texture2DMultisample::Texture2DMultisample(Specification const& spec)
-    : Texture{spec.format}, m_width{spec.width}, m_height{spec.height}, m_samples{spec.samples},
-      m_fixSampleLocations{spec.fixedSampleLocations}, m_immutable{spec.isImmutable} {
+    : Texture{spec.format}
+    , m_width{spec.width}
+    , m_height{spec.height}
+    , m_samples{spec.samples}
+    , m_fixSampleLocations{spec.fixedSampleLocations}
+    , m_immutable{spec.isImmutable} {
     if (m_width == 0) {
         throw std::runtime_error("Invalid texture width");
     }

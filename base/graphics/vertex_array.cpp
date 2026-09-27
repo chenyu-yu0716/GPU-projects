@@ -33,7 +33,8 @@ VertexArray::VertexArray() {
     glCreateVertexArrays(1, &m_handle);
 }
 
-VertexArray::VertexArray(VertexArray&& rhs) noexcept : RHIResource{std::move(rhs)} {}
+VertexArray::VertexArray(VertexArray&& rhs) noexcept
+    : RHIResource{std::move(rhs)} {}
 
 VertexArray::~VertexArray() {
     if (isValid()) {

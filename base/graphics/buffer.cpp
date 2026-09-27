@@ -113,19 +113,25 @@ static GLbitfield toNativeMapFlags(Buffer::MapFlags flags) noexcept {
 }
 
 Buffer::Buffer(UsageFlags usageFlags, size_t size, Usage usage, void const* data)
-    : m_usageFlags{usageFlags}, m_size{size}, m_immutable{false} {
+    : m_usageFlags{usageFlags}
+    , m_size{size}
+    , m_immutable{false} {
     glCreateBuffers(1, &m_handle);
     glNamedBufferData(m_handle, size, data, toNativeUsage(usage));
 }
 
 Buffer::Buffer(UsageFlags usageFlags, size_t size, StorageFlags storageFlags, void const* data)
-    : m_usageFlags{usageFlags}, m_size{size}, m_immutable{true} {
+    : m_usageFlags{usageFlags}
+    , m_size{size}
+    , m_immutable{true} {
     glCreateBuffers(1, &m_handle);
     glNamedBufferStorage(m_handle, size, data, toNativeStorageFlags(storageFlags));
 }
 
 Buffer::Buffer(Buffer&& rhs) noexcept
-    : m_usageFlags{rhs.m_usageFlags}, m_size{rhs.m_size}, m_immutable{rhs.m_immutable} {
+    : m_usageFlags{rhs.m_usageFlags}
+    , m_size{rhs.m_size}
+    , m_immutable{rhs.m_immutable} {
     rhs.m_size = 0;
 }
 

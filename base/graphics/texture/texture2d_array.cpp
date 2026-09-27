@@ -7,8 +7,12 @@
 
 namespace gfx {
 Texture2DArray::Texture2DArray(Specification const& spec)
-    : Texture{spec.format}, m_width{spec.width}, m_height{spec.height}, m_layers{spec.layers}, m_mipmapLevels{1},
-      m_immutable{spec.isImmutable} {
+    : Texture{spec.format}
+    , m_width{spec.width}
+    , m_height{spec.height}
+    , m_layers{spec.layers}
+    , m_mipmapLevels{1}
+    , m_immutable{spec.isImmutable} {
     if (m_width == 0) {
         throw std::runtime_error("Invalid texture width");
     }

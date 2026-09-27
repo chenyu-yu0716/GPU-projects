@@ -28,7 +28,8 @@ protected:
 protected:
     RHIResource() = default;
 
-    RHIResource(RHIResource&& rhs) noexcept : m_handle{std::exchange(rhs.m_handle, 0u)} {}
+    RHIResource(RHIResource&& rhs) noexcept
+        : m_handle{std::exchange(rhs.m_handle, 0u)} {}
 
     RHIResource& operator=(RHIResource&& rhs) noexcept {
         if (this != &rhs) {

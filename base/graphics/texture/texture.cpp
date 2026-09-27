@@ -5,11 +5,13 @@
 #include "graphics/texture/texture_utility.h"
 
 namespace gfx {
-Texture::Texture(Format format) : m_format{format} {}
+Texture::Texture(Format format)
+    : m_format{format} {}
 
 Texture::Texture(Texture&& rhs) noexcept
-    : RHIResource{std::move(rhs)}, m_format{std::move(rhs.m_format)},
-      m_devicePtr{std::exchange(rhs.m_devicePtr, 0ull)} {}
+    : RHIResource{std::move(rhs)}
+    , m_format{std::move(rhs.m_format)}
+    , m_devicePtr{std::exchange(rhs.m_devicePtr, 0ull)} {}
 
 Texture::~Texture() {
     if (m_devicePtr) {

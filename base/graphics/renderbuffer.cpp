@@ -119,7 +119,10 @@ static GLenum toNativeFormat(Renderbuffer::Format format) {
 }
 
 Renderbuffer::Renderbuffer(uint32_t width, uint32_t height, Format format, uint32_t samples)
-    : m_format{format}, m_width{width}, m_height{height}, m_samples{samples} {
+    : m_format{format}
+    , m_width{width}
+    , m_height{height}
+    , m_samples{samples} {
     auto internalFormat{toNativeFormat(format)};
 
     glCreateRenderbuffers(1, &m_handle);

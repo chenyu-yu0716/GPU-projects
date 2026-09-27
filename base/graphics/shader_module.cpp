@@ -73,7 +73,8 @@ static GLenum toNativeStage(ShaderModule::Stage stage) {
     throw std::runtime_error("Unsupported shader stage: " + std::string(getStageName(stage)));
 }
 
-ShaderModule::ShaderModule(std::string const& code, Stage stage) : m_stage{stage} {
+ShaderModule::ShaderModule(std::string const& code, Stage stage)
+    : m_stage{stage} {
     m_handle = glCreateShader(toNativeStage(stage));
     checkGLErrors();
 
@@ -103,7 +104,8 @@ ShaderModule::ShaderModule(std::string const& code, Stage stage) : m_stage{stage
     }
 }
 
-ShaderModule::ShaderModule(std::vector<uint32_t> const& spirv, Stage stage, char const* entrypoint) : m_stage{stage} {
+ShaderModule::ShaderModule(std::vector<uint32_t> const& spirv, Stage stage, char const* entrypoint)
+    : m_stage{stage} {
     m_handle = glCreateShader(toNativeStage(stage));
     checkGLErrors();
 

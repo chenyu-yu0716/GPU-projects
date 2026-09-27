@@ -76,9 +76,11 @@ static GLint toNativeCompareOp(Sampler::CompareOp op) {
 }
 } // namespace details
 
-Sampler::Sampler() : Sampler(Description{}) {}
+Sampler::Sampler()
+    : Sampler(Description{}) {}
 
-Sampler::Sampler(Description createInfo) : m_description{createInfo} {
+Sampler::Sampler(Description createInfo)
+    : m_description{createInfo} {
     glCreateSamplers(1, &m_handle);
 
     glSamplerParameteri(
@@ -108,7 +110,9 @@ Sampler::Sampler(Description createInfo) : m_description{createInfo} {
     }
 }
 
-Sampler::Sampler(Sampler&& rhs) noexcept : RHIResource{std::move(rhs)}, m_description{std::move(rhs.m_description)} {}
+Sampler::Sampler(Sampler&& rhs) noexcept
+    : RHIResource{std::move(rhs)}
+    , m_description{std::move(rhs.m_description)} {}
 
 Sampler::~Sampler() {
     if (isValid()) {
