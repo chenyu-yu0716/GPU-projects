@@ -14,6 +14,7 @@ CTestTestfile.cmake
 Testing/
 /vcpkg/
 /vcpkg_installed/
+/.vcpkg-binary-cache/
 
 # Compiled objects, libraries, and executables
 *.o
