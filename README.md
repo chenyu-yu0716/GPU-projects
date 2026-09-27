@@ -11,6 +11,6 @@ target and resolves `./base` before falling back to the repository root's
 
 ## Standalone submission packages
 
-Every project in `projects/` provides a `submit-<name>` target. It creates
+Every project in `projects/` provides a `submit_<name>` target. It creates
 `submission/<name>.zip` below that target's build directory, containing the
 project's sources and only the base modules listed in its CMake file.

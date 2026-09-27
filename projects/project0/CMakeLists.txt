@@ -52,7 +52,7 @@ target_include_directories(project0 PRIVATE "${PROJECT0_BASE_DIR}")
 target_link_libraries(project0 PRIVATE CUDA::cudart)
 
 # Add shared source modules manually with target_sources() when this project
-# uses them. The same list controls what submit-project0 bundles from base/.
+# uses them. The same list controls what submit_project0 bundles from base/.
 if(COMMAND add_project_submission_target)
     add_project_submission_target(
         NAME project0

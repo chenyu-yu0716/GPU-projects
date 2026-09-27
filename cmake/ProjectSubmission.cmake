@@ -54,7 +54,7 @@ function(add_project_submission_target)
     configure_file("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/PackageSubmission.cmake.in"
                    "${project_submission_script}" @ONLY)
 
-    add_custom_target("submit-${project_submission_NAME}"
+    add_custom_target("submit_${project_submission_NAME}"
         COMMAND "${CMAKE_COMMAND}" -P "${project_submission_script}"
         COMMAND "${CMAKE_COMMAND}" -E tar cfv "${project_submission_archive}" --format=zip
                 "${project_submission_NAME}"
@@ -63,5 +63,5 @@ function(add_project_submission_target)
         COMMENT "Creating standalone source package for ${project_submission_NAME}"
         VERBATIM)
 
-    set_target_properties("submit-${project_submission_NAME}" PROPERTIES FOLDER "utility")
+    set_target_properties("submit_${project_submission_NAME}" PROPERTIES FOLDER "utility")
 endfunction()

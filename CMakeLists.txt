@@ -87,11 +87,11 @@ if(CLANG_FORMAT_EXECUTABLE)
          "${PROJECTS_DIR}/*.hpp"
          "${PROJECTS_DIR}/*.cuh")
     if(PROJECTS_SOURCE_FILES)
-        add_custom_target(format-projects
+        add_custom_target(format_projects
             COMMAND "${CLANG_FORMAT_EXECUTABLE}" -i -style=file ${PROJECTS_SOURCE_FILES}
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
             COMMENT "Formatting project source files"
             VERBATIM)
-        set_target_properties(format-projects PROPERTIES FOLDER "utility")
+        set_target_properties(format_projects PROPERTIES FOLDER "utility")
     endif()
 endif()
