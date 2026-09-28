@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
 
-if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    project(project0_device_query LANGUAGES CXX CUDA)
+project(project0_device_query LANGUAGES CXX CUDA)
 
+if(PROJECT_IS_TOP_LEVEL)
     set(CMAKE_CXX_STANDARD 20)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
@@ -16,6 +16,7 @@ endif()
 set(PROJECT0_BASE_FILES
     cpu/utility.h
     gpu/utility.h)
+
 set(PROJECT0_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/base")
 if(NOT IS_DIRECTORY "${PROJECT0_BASE_DIR}")
     get_filename_component(PROJECT0_BASE_DIR

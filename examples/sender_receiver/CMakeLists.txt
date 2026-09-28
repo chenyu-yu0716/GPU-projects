@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
 
-if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    project(sender_receiver LANGUAGES CXX CUDA)
+project(sender_receiver LANGUAGES CXX CUDA)
+
+if(PROJECT_IS_TOP_LEVEL)
     set(CMAKE_CXX_STANDARD 20)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
