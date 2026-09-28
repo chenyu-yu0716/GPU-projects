@@ -18,19 +18,22 @@ if(NOT COMMAND add_project_submission_target
     include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/ProjectSubmission.cmake")
 endif()
 
-set(PROJECT0_BASE_MODULES cpu gpu)
+set(PROJECT0_BASE_FILES
+    cpu/utility.h
+    gpu/utility.h)
 set(PROJECT0_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/base")
 if(NOT IS_DIRECTORY "${PROJECT0_BASE_DIR}")
     get_filename_component(PROJECT0_BASE_DIR
                            "${CMAKE_CURRENT_SOURCE_DIR}/../../base" ABSOLUTE)
 endif()
-if(NOT EXISTS "${PROJECT0_BASE_DIR}/cpu/utility.h"
-   OR NOT EXISTS "${PROJECT0_BASE_DIR}/gpu/utility.h")
-    message(FATAL_ERROR "Unable to find base CPU and GPU utility headers")
-endif()
-set(PROJECT0_BASE_HEADERS
-    "${PROJECT0_BASE_DIR}/cpu/utility.h"
-    "${PROJECT0_BASE_DIR}/gpu/utility.h")
+
+set(PROJECT0_BASE_HEADERS)
+foreach(PROJECT0_BASE_FILE IN LISTS PROJECT0_BASE_FILES)
+    if(NOT EXISTS "${PROJECT0_BASE_DIR}/${PROJECT0_BASE_FILE}")
+        message(FATAL_ERROR "Unable to find base file: ${PROJECT0_BASE_FILE}")
+    endif()
+    list(APPEND PROJECT0_BASE_HEADERS "${PROJECT0_BASE_DIR}/${PROJECT0_BASE_FILE}")
+endforeach()
 
 file(GLOB_RECURSE PROJECT0_SOURCES CONFIGURE_DEPENDS
      "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
@@ -54,11 +57,11 @@ target_include_directories(project0 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include
 target_include_directories(project0 PRIVATE "${PROJECT0_BASE_DIR}")
 target_link_libraries(project0 PRIVATE CUDA::cudart)
 
-# Add shared source modules manually with target_sources() when this project
-# uses them. The same list controls what submit_project0 bundles from base/.
+# Add shared files manually with target_sources() when this project uses them.
+# The same list controls what submit_project0 bundles from base/.
 if(COMMAND add_project_submission_target)
     add_project_submission_target(
         NAME project0
         SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}"
-        BASE_MODULES ${PROJECT0_BASE_MODULES})
+        BASE_FILES ${PROJECT0_BASE_FILES})
 endif()

@@ -4,7 +4,7 @@ file(MAKE_DIRECTORY "@PROJECT_SUBMISSION_STAGING_DIR@")
 file(COPY "@PROJECT_SUBMISSION_SOURCE_DIR@/" DESTINATION "@PROJECT_SUBMISSION_STAGING_DIR@"
      PATTERN "*.zip" EXCLUDE)
 
-# Remove generated trees explicitly before adding the selected base modules
+# Remove generated trees explicitly before adding the selected base files
 # below.
 file(REMOVE_RECURSE
      "@PROJECT_SUBMISSION_STAGING_DIR@/base"
@@ -20,11 +20,19 @@ file(REMOVE
      "@PROJECT_SUBMISSION_STAGING_DIR@/cmake_install.cmake"
      "@PROJECT_SUBMISSION_STAGING_DIR@/Makefile")
 
-set(project_submission_base_modules "@PROJECT_SUBMISSION_BASE_MODULES@")
-if(project_submission_base_modules)
+set(project_submission_base_files "@PROJECT_SUBMISSION_BASE_FILES@")
+if(project_submission_base_files)
     file(MAKE_DIRECTORY "@PROJECT_SUBMISSION_STAGING_DIR@/base")
-    foreach(project_submission_base_module IN LISTS project_submission_base_modules)
-        file(COPY "@PROJECT_SUBMISSION_BASE_DIR@/${project_submission_base_module}"
-             DESTINATION "@PROJECT_SUBMISSION_STAGING_DIR@/base")
+    foreach(project_submission_base_file IN LISTS project_submission_base_files)
+        get_filename_component(project_submission_base_file_directory
+                               "${project_submission_base_file}" DIRECTORY)
+        set(project_submission_base_file_destination "@PROJECT_SUBMISSION_STAGING_DIR@/base")
+        if(project_submission_base_file_directory)
+            string(APPEND project_submission_base_file_destination
+                   "/${project_submission_base_file_directory}")
+        endif()
+        file(MAKE_DIRECTORY "${project_submission_base_file_destination}")
+        file(COPY "@PROJECT_SUBMISSION_BASE_DIR@/${project_submission_base_file}"
+             DESTINATION "${project_submission_base_file_destination}")
     endforeach()
 endif()

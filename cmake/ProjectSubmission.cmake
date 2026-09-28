@@ -4,7 +4,7 @@ include(CMakeParseArguments)
 function(add_project_submission_target)
     cmake_parse_arguments(PARSE_ARGV 0 project_submission ""
                           "NAME;SOURCE_DIR"
-                          "BASE_MODULES")
+                          "BASE_FILES")
 
     if(NOT project_submission_NAME)
         message(FATAL_ERROR "add_project_submission_target requires NAME")
@@ -25,24 +25,25 @@ function(add_project_submission_target)
                                "${project_submission_source_dir}/../../base" ABSOLUTE)
     endif()
 
-    if(project_submission_BASE_MODULES)
+    if(project_submission_BASE_FILES)
         if(NOT EXISTS "${project_submission_base_dir}")
             message(FATAL_ERROR "Unable to find base/ for ${project_submission_NAME}")
         endif()
-        foreach(project_submission_base_module IN LISTS project_submission_BASE_MODULES)
-            if(project_submission_base_module MATCHES "(^|/)\\.\\.(/|$)")
-                message(FATAL_ERROR "Base module paths must not leave base/: ${project_submission_base_module}")
+        foreach(project_submission_base_file IN LISTS project_submission_BASE_FILES)
+            if(IS_ABSOLUTE "${project_submission_base_file}"
+               OR project_submission_base_file MATCHES "(^|/)\\.\\.(/|$)")
+                message(FATAL_ERROR "Base file paths must not leave base/: ${project_submission_base_file}")
             endif()
-            if(NOT IS_DIRECTORY "${project_submission_base_dir}/${project_submission_base_module}")
-                message(FATAL_ERROR
-                        "Base module '${project_submission_base_module}' does not exist in ${project_submission_base_dir}")
+            if(NOT EXISTS "${project_submission_base_dir}/${project_submission_base_file}"
+               OR IS_DIRECTORY "${project_submission_base_dir}/${project_submission_base_file}")
+                message(FATAL_ERROR "Base file '${project_submission_base_file}' does not exist in ${project_submission_base_dir}")
             endif()
         endforeach()
     endif()
 
     set(PROJECT_SUBMISSION_SOURCE_DIR "${project_submission_source_dir}")
     set(PROJECT_SUBMISSION_BASE_DIR "${project_submission_base_dir}")
-    set(PROJECT_SUBMISSION_BASE_MODULES "${project_submission_BASE_MODULES}")
+    set(PROJECT_SUBMISSION_BASE_FILES "${project_submission_BASE_FILES}")
     set(PROJECT_SUBMISSION_STAGING_DIR
         "${CMAKE_CURRENT_BINARY_DIR}/submission/${project_submission_NAME}")
     set(project_submission_archive
