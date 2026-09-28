@@ -13,11 +13,6 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     find_package(CUDAToolkit REQUIRED)
 endif()
 
-if(NOT COMMAND add_project_submission_target
-   AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/ProjectSubmission.cmake")
-    include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/ProjectSubmission.cmake")
-endif()
-
 set(PROJECT0_BASE_FILES
     cpu/utility.h
     gpu/utility.h)
