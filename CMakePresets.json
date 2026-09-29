@@ -108,20 +108,6 @@
       "inherits": [ "windows-base", "vs-base", "release" ]
     },
     {
-      "name": "windows-mingw-debug",
-      "displayName": "MinGW Debug",
-      "description": "Windows MinGW debug configuration",
-      "inherits": [ "windows-base", "gcc-base", "debug" ],
-      "generator": "MinGW Makefiles"
-    },
-    {
-      "name": "windows-mingw-release",
-      "displayName": "MinGW Release",
-      "description": "Windows MinGW release configuration",
-      "inherits": [ "windows-base", "gcc-base", "release" ],
-      "generator": "MinGW Makefiles"
-    },
-    {
       "name": "linux-gcc-debug",
       "displayName": "GCC Debug",
       "description": "Linux/WSL2 GCC debug configuration",
@@ -205,18 +191,6 @@
       "displayName": "x64 Release",
       "configurePreset": "windows-vs-release",
       "inherits": [ "windows-base", "multi-config-release" ]
-    },
-    {
-      "name": "windows-mingw-debug",
-      "displayName": "MinGW Debug",
-      "configurePreset": "windows-mingw-debug",
-      "inherits": [ "windows-base", "multicore" ]
-    },
-    {
-      "name": "windows-mingw-release",
-      "displayName": "MinGW Release",
-      "configurePreset": "windows-mingw-release",
-      "inherits": [ "windows-base", "multicore" ]
     },
     {
       "name": "linux-gcc-debug",

@@ -1,0 +1,93 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "windows-vs-debug-vcpkg",
+      "displayName": "x64 Debug (vcpkg)",
+      "description": "Windows Visual Studio debug configuration using vcpkg",
+      "inherits": "windows-vs-debug",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-windows"
+      }
+    },
+    {
+      "name": "windows-vs-release-vcpkg",
+      "displayName": "x64 Release (vcpkg)",
+      "description": "Windows Visual Studio release configuration using vcpkg",
+      "inherits": "windows-vs-release",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-windows"
+      }
+    },
+    {
+      "name": "linux-gcc-debug-vcpkg",
+      "displayName": "GCC Debug (vcpkg)",
+      "description": "Linux GCC debug configuration using vcpkg",
+      "inherits": "linux-gcc-debug",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
+      }
+    },
+    {
+      "name": "linux-gcc-release-vcpkg",
+      "displayName": "GCC Release (vcpkg)",
+      "description": "Linux GCC release configuration using vcpkg",
+      "inherits": "linux-gcc-release",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
+      }
+    },
+    {
+      "name": "linux-clang-debug-vcpkg",
+      "displayName": "Clang Debug (vcpkg)",
+      "description": "Linux Clang debug configuration using vcpkg",
+      "inherits": "linux-clang-debug",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
+      }
+    },
+    {
+      "name": "linux-clang-release-vcpkg",
+      "displayName": "Clang Release (vcpkg)",
+      "description": "Linux Clang release configuration using vcpkg",
+      "inherits": "linux-clang-release",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-vs-debug-vcpkg",
+      "configurePreset": "windows-vs-debug-vcpkg",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-vs-release-vcpkg",
+      "configurePreset": "windows-vs-release-vcpkg",
+      "configuration": "Release"
+    },
+    {
+      "name": "linux-gcc-debug-vcpkg",
+      "configurePreset": "linux-gcc-debug-vcpkg"
+    },
+    {
+      "name": "linux-gcc-release-vcpkg",
+      "configurePreset": "linux-gcc-release-vcpkg"
+    },
+    {
+      "name": "linux-clang-debug-vcpkg",
+      "configurePreset": "linux-clang-debug-vcpkg"
+    },
+    {
+      "name": "linux-clang-release-vcpkg",
+      "configurePreset": "linux-clang-release-vcpkg"
+    }
+  ]
+}

@@ -12,11 +12,30 @@ target and resolves `./base` before falling back to the repository root's
 ## Graphics base sources
 
 `base/graphics` requires OpenGL 4.6, GLAD (with OpenGL 4.6, loader, and
-extension support), GLFW, and GLM. The repository's `vcpkg.json` declares
-these dependencies. Configure CMake with your vcpkg toolchain, for example:
+extension support), GLFW, and GLM.
+
+## Dependency providers
+
+The project supports both vcpkg and pre-installed dependencies. The committed
+`CMakePresets.json` contains provider-neutral Windows and Linux presets, so it
+does not assume a particular vcpkg installation path.
+
+For vcpkg, set `VCPKG_ROOT` to any bootstrapped vcpkg checkout, copy
+`CMakeUserPresets.json.example` to `CMakeUserPresets.json`, and select the
+matching vcpkg preset. The user preset file is intentionally ignored by Git.
+The repository's `vcpkg.json` then declares the required dependencies and their
+baseline. The template provides Visual Studio, Linux GCC, and Linux Clang
+variants.
+
+For pre-installed dependencies, use a normal preset such as
+`windows-vs-debug` or `linux-gcc-debug`. If the packages are outside CMake's
+default search paths, set `CMAKE_PREFIX_PATH` in `CMakeUserPresets.json` or in
+the configure environment.
+
+For example, a vcpkg configure command is:
 
 ```sh
-cmake --preset <preset> -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+cmake --preset linux-gcc-debug-vcpkg
 ```
 
 A project that manually adds graphics source files must also declare and link
