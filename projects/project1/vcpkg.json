@@ -1,0 +1,17 @@
+{
+  "name": "project1-mandelbrot",
+  "version-string": "1.0.0",
+  "builtin-baseline": "07f4812200df3d3c931c0c8a6081d3b21fe2bf9f",
+  "dependencies": [
+    {
+      "name": "glad",
+      "features": [
+        "extensions",
+        "gl-api-46",
+        "loader"
+      ]
+    },
+    "glfw3",
+    "glm"
+  ]
+}

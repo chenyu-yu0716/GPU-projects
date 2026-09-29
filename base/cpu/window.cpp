@@ -15,6 +15,8 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
+int Window::s_instanceCount = 0;
+
 Window::Window(Config const& config)
     : m_title(std::move(config.title))
     , m_width(config.width)
