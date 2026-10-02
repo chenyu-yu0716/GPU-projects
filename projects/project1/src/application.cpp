@@ -46,14 +46,14 @@ void Application::renderFrame() {
     // 1. bind the shader program and set the uniform variable for the width of the screen
     m_renderScreenProgram->use();
     constexpr int uWidthLocation = 0;
-    m_renderScreenProgram->setUniform(uWidthLocation, m_window->width());
+    m_renderScreenProgram->setUniform(uWidthLocation, m_window->framebufferWidth());
 
     // 2. bind the color buffer as a shader storage buffer
     m_colorBuffer->bindAsShaderStorage(0);
 
     // 3. set the uniform variable for the width of the screen
     m_screenVertexArray->bind();
-    RHI::drawArrays(RHI::PrimitiveType::Triangles, 0, 3);
+    gfx::RHI::draw(gfx::RHI::Primitive::Triangles, 0, 3);
 
     // 4. cleanup bindings
     m_screenVertexArray->unbind();
@@ -61,8 +61,8 @@ void Application::renderFrame() {
     m_renderScreenProgram->unuse();
 }
 
-size_t Application::getColorBufferBytes() const {
-    return m_window->width() * m_window->height() * sizeof(float) * 3;
+size_t Application::getColorBufferBytes() const noexcept {
+    return m_window->framebufferWidth() * m_window->framebufferHeight() * sizeof(float) * 3;
 }
 
 std::unique_ptr<gfx::GLProgram> Application::createRenderScreenProgram() {
