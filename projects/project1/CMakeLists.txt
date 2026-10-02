@@ -23,19 +23,18 @@ set(PROJECT1_BASE_FILES
     common/window.h
     gpu/timer.h
     gpu/utility.h
+    graphics/buffer.h
     graphics/gl_utility.h
     graphics/graphics_context.cpp
     graphics/graphics_context.h
+    graphics/rhi.h
+    graphics/rhi.cpp
+    graphics/gl_program.h
+    graphics/gl_program.cpp
     graphics/rhi_resource.h
-    graphics/sampler.cpp
-    graphics/sampler.h
-    graphics/shader_module.cpp
     graphics/shader_module.h
-    graphics/texture/texture.cpp
-    graphics/texture/texture.h
-    graphics/texture/texture2d.cpp
-    graphics/texture/texture2d.h
-    graphics/texture/texture_utility.h)
+    graphics/shader_module.cpp
+)
 
 set(PROJECT1_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/base")
 if(NOT IS_DIRECTORY "${PROJECT1_BASE_DIR}")
