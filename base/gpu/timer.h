@@ -2,7 +2,6 @@
 
 #include <cuda_runtime.h>
 
-#include <cassert>
 #include <utility>
 
 #include "gpu/utility.h"
@@ -42,8 +41,6 @@ public:
     }
 
     void stop(cudaStream_t stream = nullptr) {
-        assert(m_started && "Timer must be started before it can be stopped");
-
         CHECK_CUDA(cudaEventRecord(m_stopEvent, stream));
         CHECK_CUDA(cudaEventSynchronize(m_stopEvent));
     }
