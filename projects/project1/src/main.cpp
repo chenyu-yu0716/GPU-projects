@@ -1,5 +1,3 @@
-#include <complex.hpp>
-#include <common/window.h>
 #include <application.h>
 
 int main(int argc, char* argv[]) {
@@ -15,9 +13,18 @@ int main(int argc, char* argv[]) {
         .driverVersion = { 4, 5 },
     };
 
-    Application app(config);
+    try {
+        Application app(config);
+        app.run();
+    }
+    catch (std::runtime_error& e) {
+        std::cerr << e.what();
+        return EXIT_FAILURE;
+    }
+    catch (...) {
+        std::cerr << "Unknown error\n";
+        return EXIT_FAILURE;
+    }
 
-    app.run();
-
-    return 0;
+    return EXIT_SUCCESS;
 }
