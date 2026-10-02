@@ -37,6 +37,8 @@ public:
 
     TextureCubemap& operator=(TextureCubemap&& rhs) noexcept = default;
 
+    uint32_t getNativeType() const override;
+
     void update(void const* data,
                 Texture::ExternalFormat pixelFormat,
                 Texture::PixelType pixelType,

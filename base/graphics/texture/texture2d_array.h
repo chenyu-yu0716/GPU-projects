@@ -24,6 +24,8 @@ public:
 
     Texture2DArray& operator=(Texture2DArray&& rhs) noexcept = default;
 
+    uint32_t getNativeType() const override;
+
     void generateMipmap();
 
     void update(void const* data, ExternalFormat pixelFormat, PixelType type, uint32_t layer, uint32_t mipmaplevel = 0);

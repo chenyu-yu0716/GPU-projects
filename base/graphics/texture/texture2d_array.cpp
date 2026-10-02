@@ -64,6 +64,10 @@ Texture2DArray::Texture2DArray(Specification const& spec)
     checkGLErrors();
 }
 
+uint32_t Texture2DArray::getNativeType() const {
+    return GL_TEXTURE_2D_ARRAY;
+}
+
 void Texture2DArray::generateMipmap() {
     if (m_mipmapLevels == 1) {
         if (m_immutable) {

@@ -184,6 +184,8 @@ public:
 
     void clear(ExternalFormat format, PixelType type, void const* data, int level = 0);
 
+    virtual uint32_t getNativeType() const = 0;
+
     /* APIs for bindless texture */
     // Once the texture is made as bindless texture by `makeDeviceResident`,
     // + the texture memory should not be reallocated, but can be updated

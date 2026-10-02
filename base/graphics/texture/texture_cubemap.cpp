@@ -74,6 +74,10 @@ TextureCubemap::TextureCubemap(Specification const& spec, std::array<void const*
     checkGLErrors();
 }
 
+uint32_t TextureCubemap::getNativeType() const {
+    return GL_TEXTURE_CUBE_MAP;
+}
+
 void TextureCubemap::update(
     void const* data, Texture::ExternalFormat pixelFormat, Texture::PixelType pixelType, Face face, uint32_t level) {
     if (data == nullptr) {

@@ -71,6 +71,10 @@ Texture2D::Texture2D(Specification const& spec, void const* data)
     checkGLErrors();
 }
 
+uint32_t Texture2D::getNativeType() const {
+    return GL_TEXTURE_2D;
+}
+
 void Texture2D::generateMipmap() {
     if (m_mipmapLevels == 1) {
         if (m_immutable) {

@@ -25,6 +25,8 @@ public:
 
     Texture2D& operator=(Texture2D&& rhs) noexcept = default;
 
+    uint32_t getNativeType() const override;
+
     uint32_t getWidth() const noexcept {
         return m_width;
     }
