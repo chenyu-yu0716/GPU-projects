@@ -1,5 +1,7 @@
 #pragma once
 
+#include "graphics/gl_utility.h"
+
 #include <cuda_gl_interop.h>
 
 #include "gpu/graphics_resource/graphics_resource.h"

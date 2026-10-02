@@ -2,6 +2,8 @@
 
 #include <cstddef>
 
+#include "graphics/gl_utility.h"
+
 #include <cuda_gl_interop.h>
 
 #include "graphics/buffer.h"
