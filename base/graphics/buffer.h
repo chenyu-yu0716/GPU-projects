@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "cpu/enum.h"
+#include "common/enum.h"
 #include "graphics/rhi_resource.h"
 
 namespace gfx {

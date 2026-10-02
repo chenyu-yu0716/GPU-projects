@@ -1,6 +1,6 @@
 #include <device_info.h>
 
-#include <cpu/utility.h>
+#include <common/utility.h>
 #include <gpu/utility.h>
 
 static int convertSmVerToCudaCores(int major, int minor) {

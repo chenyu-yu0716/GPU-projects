@@ -6,7 +6,7 @@
 
 #include <glm/glm.hpp>
 
-#include "cpu/enum.h"
+#include "common/enum.h"
 #include "graphics/viewport.h"
 
 namespace gfx {

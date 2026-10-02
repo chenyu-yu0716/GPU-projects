@@ -14,7 +14,7 @@ if(PROJECT_IS_TOP_LEVEL)
 endif()
 
 set(PROJECT0_BASE_FILES
-    cpu/utility.h
+    common/utility.h
     gpu/utility.h)
 
 set(PROJECT0_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/base")

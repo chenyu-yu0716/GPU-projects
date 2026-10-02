@@ -1,6 +1,6 @@
 #include <cuda_runtime.h>
 
-#include <cpu/utility.h>
+#include <common/utility.h>
 #include <device_info.h>
 
 #include <cstdlib>

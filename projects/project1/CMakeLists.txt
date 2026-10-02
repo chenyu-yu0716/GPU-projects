@@ -18,9 +18,9 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
 set(PROJECT1_BASE_FILES
-    cpu/timer.h
-    cpu/window.cpp
-    cpu/window.h
+    common/timer.h
+    common/window.cpp
+    common/window.h
     gpu/timer.h
     gpu/utility.h
     graphics/gl_utility.h
