@@ -91,8 +91,9 @@ void main() {
 }
 )GLSL";
 
-    return std::make_unique<gfx::GLProgram>(std::vector<gfx::ShaderModule>{
-        gfx::ShaderModule(vertexShaderCode, gfx::ShaderModule::Stage::Vertex),
-        gfx::ShaderModule(fragementShaderCode, gfx::ShaderModule::Stage::Fragment)
-    });
+    std::vector<gfx::ShaderModule> shaderModules;
+    shaderModules.emplace_back(vertexShaderCode, gfx::ShaderModule::Stage::Vertex);
+    shaderModules.emplace_back(fragementShaderCode, gfx::ShaderModule::Stage::Fragment);
+
+    return std::make_unique<gfx::GLProgram>(std::move(shaderModules));
 }
