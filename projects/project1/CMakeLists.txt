@@ -24,6 +24,7 @@ set(PROJECT1_BASE_FILES
     gpu/timer.h
     gpu/utility.h
     graphics/buffer.h
+    graphics/buffer.cpp
     graphics/gl_utility.h
     graphics/graphics_context.cpp
     graphics/graphics_context.h
@@ -34,6 +35,8 @@ set(PROJECT1_BASE_FILES
     graphics/rhi_resource.h
     graphics/shader_module.h
     graphics/shader_module.cpp
+    graphics/vertex_array.h
+    graphics/vertex_array.cpp
 )
 
 set(PROJECT1_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/base")
