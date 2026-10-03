@@ -1,39 +1,40 @@
 #pragma once
 
 #include <chrono>
-#include <stdexcept>
 
-class Timer {
+struct Timer {
 public:
-    void start() noexcept {
-        m_startTime = Clock::now();
-        m_started = true;
-        m_stopped = false;
+    using Clock = std::chrono::high_resolution_clock;
+    using TimePoint = Clock::time_point;
+    using Duration = Clock::duration;
+
+public:
+    Timer() = default;
+
+    void tick() {
+        m_lastTimestamp = Clock::now();
     }
 
-    void stop() {
-        if (!m_started) {
-            throw std::logic_error("Timer must be started before it can be stopped");
-        }
+    double tock() {
+        TimePoint now = Clock::now();
+        Duration duration = now - m_lastTimestamp;
+        m_totalTime += duration;
+        m_lastTimestamp = now;
 
-        m_stopTime = Clock::now();
-        m_stopped = true;
+        return toSeconds(duration);
     }
 
-    [[nodiscard]] double elapsedMilliseconds() const {
-        if (!m_started) {
-            throw std::logic_error("Timer must be started before its elapsed time can be queried");
-        }
-
-        Clock::time_point const endTime = m_stopped ? m_stopTime : Clock::now();
-        return std::chrono::duration<double, std::milli>(endTime - m_startTime).count();
+    double getTotalTime() const noexcept {
+        return toSeconds(m_totalTime);
     }
 
 private:
-    using Clock = std::chrono::steady_clock;
+    TimePoint m_lastTimestamp{ Clock::now() };
+    Duration m_totalTime{ Duration::zero() };
 
-    Clock::time_point m_startTime{};
-    Clock::time_point m_stopTime{};
-    bool m_started{false};
-    bool m_stopped{false};
+private:
+    static double toSeconds(Duration const& duration) noexcept {
+        static_assert(Duration::period::num == 1);
+        return 1.0 * duration.count() / Duration::period::den;
+    }
 };
