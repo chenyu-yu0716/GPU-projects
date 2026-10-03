@@ -10,7 +10,6 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-#include <utility>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -20,6 +19,7 @@
 /*************************************************************************************************/
 static KeyCode toKeyCode(uint32_t glfwKeyCode) {
     switch (glfwKeyCode) {
+    case GLFW_KEY_UNKNOWN: return KeyCode::Unknown;
     case GLFW_KEY_WORLD_1: return KeyCode::Unknown;
     case GLFW_KEY_WORLD_2: return KeyCode::Unknown;
     }
