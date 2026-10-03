@@ -6,7 +6,7 @@
 #include <string>
 #include <utility>
 
-struct GLFWwindow;
+#include <common/event/event.h>
 
 namespace gfx {
 class GraphicsContext;
@@ -14,12 +14,7 @@ class GraphicsContext;
 
 class Window {
 public:
-    using FramebufferSizeCallback = std::function<void(int width, int height)>;
-    using MouseButtonCallback = std::function<void(int button, int action, int mods)>;
-    using CursorPositionCallback = std::function<void(double x, double y)>;
-    using ScrollCallback = std::function<void(double xoffset, double yoffset)>;
-    using KeyCallback = std::function<void(int keycode, int scancode, int action, int mods)>;
-    using CharacterCallback = std::function<void(unsigned int codepoint)>;
+    using EventCallbackFunc = std::function<void(Event&)>;
 
     struct Config {
         std::string title;
@@ -42,7 +37,7 @@ public:
 
     Window& operator=(Window const&) = delete;
 
-    GLFWwindow* handle() const noexcept {
+    void* handle() const noexcept {
         return m_handle;
     }
 
@@ -70,6 +65,12 @@ public:
         return m_vsync;
     }
 
+    std::string getTitle() const noexcept {
+        return m_title;
+    }
+
+    void setTitle(std::string_view title);
+
     void setVSync(bool enabled);
 
     void setResizable(bool resizable) const;
@@ -88,20 +89,10 @@ public:
 
     void swapBuffers() const;
 
-    void registerFramebufferSizeCallback(FramebufferSizeCallback callback);
-
-    void registerMouseButtonCallback(MouseButtonCallback callback);
-
-    void registerCursorPositionCallback(CursorPositionCallback callback);
-
-    void registerScrollCallback(ScrollCallback callback);
-
-    void registerKeyCallback(KeyCallback callback);
-
-    void registerCharacterCallback(CharacterCallback callback);
+    void setEventCallback(const EventCallbackFunc& callback);
 
 private:
-    GLFWwindow* m_handle = nullptr;
+    void* m_handle = nullptr;
     std::unique_ptr<gfx::GraphicsContext> m_graphicsContext;
 
     std::string m_title;
@@ -111,29 +102,28 @@ private:
     uint32_t m_framebufferHeight = 0;
     bool m_vsync = false;
 
-    FramebufferSizeCallback m_framebufferSizeCallback;
-    MouseButtonCallback m_mouseButtonCallback;
-    CursorPositionCallback m_cursorPositionCallback;
-    ScrollCallback m_scrollCallback;
-    KeyCallback m_keyCallback;
-    CharacterCallback m_characterCallback;
+    EventCallbackFunc m_eventCallback;
 
     static int s_instanceCount;
 
 private:
     void destroyNativeWindow();
 
-    static void windowSizeCallback(GLFWwindow* handle, int width, int height);
+    void registerWindowSizeCallback();
 
-    static void framebufferSizeCallback(GLFWwindow* handle, int width, int height);
+    void registerWindowIconifyCallback();
 
-    static void mouseButtonCallback(GLFWwindow* handle, int button, int action, int mods);
+    void registerFramebufferSizeCallback();
 
-    static void cursorPositionCallback(GLFWwindow* handle, double x, double y);
+    void registerWindowCloseCallback();
 
-    static void scrollCallback(GLFWwindow* handle, double xoffset, double yoffset);
+    void registerKeyCallback();
 
-    static void keyCallback(GLFWwindow* handle, int keycode, int scancode, int action, int mods);
+    void registerCharCallback();
 
-    static void characterCallback(GLFWwindow* handle, unsigned int codepoint);
+    void registerCursorPosCallback();
+
+    void registerScrollCallback();
+
+    void registerMouseButtonCallback();
 };

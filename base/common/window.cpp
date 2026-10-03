@@ -2,23 +2,48 @@
 
 #include "../graphics/graphics_context.h"
 
-#include <algorithm>
-#include <array>
+#include <common/event/keyboard_event.h>
+#include <common/event/mouse_event.h>
+#include <common/event/window_event.h>
+
 #include <format>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
 #include <utility>
 
-#include <glad/glad.h>
-
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
+/*************************************************************************************************/
+/*                                       GLFW Input Interpretion                                 */
+/*************************************************************************************************/
+static KeyCode toKeyCode(uint32_t glfwKeyCode) {
+    switch (glfwKeyCode) {
+    case GLFW_KEY_WORLD_1: return KeyCode::Unknown;
+    case GLFW_KEY_WORLD_2: return KeyCode::Unknown;
+    }
+
+    return static_cast<KeyCode>(glfwKeyCode);
+}
+
+static MouseButton toMouseButton(int glfwMouseButton) {
+    switch (glfwMouseButton) {
+    case GLFW_MOUSE_BUTTON_LEFT: return MouseButton::Left;
+    case GLFW_MOUSE_BUTTON_MIDDLE: return MouseButton::Middle;
+    case GLFW_MOUSE_BUTTON_RIGHT: return MouseButton::Right;
+    }
+
+    return MouseButton::Unknown;
+}
+
+/*************************************************************************************************/
+/*                                             Window                                            */
+/*************************************************************************************************/
 int Window::s_instanceCount = 0;
 
 Window::Window(Config const& config)
-    : m_title(std::move(config.title))
+    : m_title(config.title)
     , m_width(config.width)
     , m_height(config.height)
     , m_framebufferWidth(config.width)
@@ -95,18 +120,18 @@ Window::Window(Config const& config)
 
     // Get actual window size and framebuffer size
     int width, height;
-    glfwGetWindowSize(m_handle, &width, &height);
+    glfwGetWindowSize((GLFWwindow*)m_handle, &width, &height);
     m_width = static_cast<uint32_t>(width);
     m_height = static_cast<uint32_t>(height);
 
     int framebufferWidth, framebufferHeight;
-    glfwGetFramebufferSize(m_handle, &framebufferWidth, &framebufferHeight);
+    glfwGetFramebufferSize((GLFWwindow*)m_handle, &framebufferWidth, &framebufferHeight);
     m_framebufferWidth = static_cast<uint32_t>(framebufferWidth);
     m_framebufferHeight = static_cast<uint32_t>(framebufferHeight);
 
     // Init graphics context
     try {
-        m_graphicsContext->init(m_handle);
+        m_graphicsContext->init((GLFWwindow*)m_handle);
     }
     catch (...) {
         destroyNativeWindow();
@@ -124,10 +149,21 @@ Window::Window(Config const& config)
         glfwSetInputMode((GLFWwindow*)m_handle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     }
 
+    // Set this pointer to glfw window user pointer for callback access
+    glfwSetWindowUserPointer((GLFWwindow*)m_handle, this);
+
     // Set callback functions
-    glfwSetWindowUserPointer(m_handle, this);
-    glfwSetWindowSizeCallback(m_handle, windowSizeCallback);
-    glfwSetFramebufferSizeCallback(m_handle, framebufferSizeCallback);
+    registerWindowSizeCallback();
+    registerWindowIconifyCallback();
+    registerFramebufferSizeCallback();
+    registerWindowCloseCallback();
+
+    registerKeyCallback();
+    registerCharCallback();
+
+    registerCursorPosCallback();
+    registerScrollCallback();
+    registerMouseButtonCallback();
 
     // Increment instance count to track GLFW initialization and termination
     ++s_instanceCount;
@@ -141,11 +177,11 @@ Window::~Window() {
 }
 
 bool Window::shouldClose() const {
-    return glfwWindowShouldClose(m_handle) != 0;
+    return glfwWindowShouldClose((GLFWwindow*)m_handle) != 0;
 }
 
 void Window::requestClose() const {
-    glfwSetWindowShouldClose(m_handle, GLFW_TRUE);
+    glfwSetWindowShouldClose((GLFWwindow*)m_handle, GLFW_TRUE);
 }
 
 void Window::close() const {
@@ -157,7 +193,12 @@ void Window::pollEvents() const {
 }
 
 void Window::swapBuffers() const {
-    glfwSwapBuffers(m_handle);
+    glfwSwapBuffers((GLFWwindow*)m_handle);
+}
+
+void Window::setTitle(std::string_view title) {
+    glfwSetWindowTitle((GLFWwindow*)m_handle, title.data());
+    m_title = title;
 }
 
 void Window::setVSync(bool enabled) {
@@ -180,99 +221,174 @@ void Window::maximize() {
 }
 
 void Window::centerAlign() {
-    auto const videoMode{glfwGetVideoMode(glfwGetPrimaryMonitor())};
-    auto const xpos{0.5f * (videoMode->width - m_width)};
-    auto const ypos{0.5f * (videoMode->height - m_height)};
-
-    glfwSetWindowPos((GLFWwindow*)m_handle, xpos, ypos);
-}
-
-void Window::registerFramebufferSizeCallback(FramebufferSizeCallback callback) {
-    m_framebufferSizeCallback = std::move(callback);
-}
-
-void Window::registerMouseButtonCallback(MouseButtonCallback callback) {
-    m_mouseButtonCallback = std::move(callback);
-    glfwSetMouseButtonCallback(m_handle, m_mouseButtonCallback ? mouseButtonCallback : nullptr);
-}
-
-void Window::registerCursorPositionCallback(CursorPositionCallback callback) {
-    m_cursorPositionCallback = std::move(callback);
-    glfwSetCursorPosCallback(m_handle, m_cursorPositionCallback ? cursorPositionCallback : nullptr);
-}
-
-void Window::registerScrollCallback(ScrollCallback callback) {
-    m_scrollCallback = std::move(callback);
-    glfwSetScrollCallback(m_handle, m_scrollCallback ? scrollCallback : nullptr);
-}
-
-void Window::registerKeyCallback(KeyCallback callback) {
-    m_keyCallback = std::move(callback);
-    glfwSetKeyCallback(m_handle, m_keyCallback ? keyCallback : nullptr);
-}
-
-void Window::registerCharacterCallback(CharacterCallback callback) {
-    m_characterCallback = std::move(callback);
-    glfwSetCharCallback(m_handle, m_characterCallback ? characterCallback : nullptr);
-}
-
-void Window::windowSizeCallback(GLFWwindow* handle, int width, int height) {
-    auto* window = static_cast<Window*>(glfwGetWindowUserPointer(handle));
-    if (window != nullptr && width >= 0 && height >= 0) {
-        window->m_width = static_cast<uint32_t>(width);
-        window->m_height = static_cast<uint32_t>(height);
+    // Wayland deliberately does not allow clients to choose a top-level
+    // window position.  Calling glfwSetWindowPos there only emits GLFW 65548.
+    if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND) {
+        return;
     }
+
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    if (monitor == nullptr) {
+        std::cerr << "Unable to center window because the primary monitor is unavailable\n";
+        return;
+    }
+
+    int workAreaX = 0;
+    int workAreaY = 0;
+    int workAreaWidth = 0;
+    int workAreaHeight = 0;
+    glfwGetMonitorWorkarea(monitor, &workAreaX, &workAreaY, &workAreaWidth, &workAreaHeight);
+    if (workAreaWidth <= 0 || workAreaHeight <= 0) {
+        std::cerr << "Unable to center window because the primary monitor work area is unavailable\n";
+        return;
+    }
+
+    int const x = workAreaX + (workAreaWidth - static_cast<int>(m_width)) / 2;
+    int const y = workAreaY + (workAreaHeight - static_cast<int>(m_height)) / 2;
+    glfwSetWindowPos((GLFWwindow*)m_handle, x, y);
 }
 
-void Window::framebufferSizeCallback(GLFWwindow* handle, int width, int height) {
-    auto* window = static_cast<Window*>(glfwGetWindowUserPointer(handle));
-    if (window != nullptr && width >= 0 && height >= 0) {
-        window->m_framebufferWidth = static_cast<uint32_t>(width);
-        window->m_framebufferHeight = static_cast<uint32_t>(height);
-        if (window->m_framebufferSizeCallback) {
-            window->m_framebufferSizeCallback(width, height);
+void Window::setEventCallback(const EventCallbackFunc& callback) {
+    m_eventCallback = callback;
+}
+
+void Window::registerWindowSizeCallback() {
+    glfwSetWindowSizeCallback((GLFWwindow*)m_handle, [](GLFWwindow* window, int width, int height) {
+        Window* win{ reinterpret_cast<Window*>(glfwGetWindowUserPointer(window)) };
+        win->m_width = static_cast<uint32_t>(width);
+        win->m_height = static_cast<uint32_t>(height);
+
+        if (win->m_eventCallback) [[likely]] {
+            auto event{ WindowResizeEvent(win->m_width, win->m_height) };
+            win->m_eventCallback(event);
         }
-    }
+        });
 }
 
-void Window::mouseButtonCallback(GLFWwindow* handle, int button, int action, int mods) {
-    auto* window = static_cast<Window*>(glfwGetWindowUserPointer(handle));
-    if (window != nullptr && window->m_mouseButtonCallback) {
-        window->m_mouseButtonCallback(button, action, mods);
-    }
+void Window::registerWindowIconifyCallback() {
+    glfwSetWindowIconifyCallback((GLFWwindow*)m_handle, [](GLFWwindow* window, int iconified) {
+        Window* win{ reinterpret_cast<Window*>(glfwGetWindowUserPointer(window)) };
+        if (win->m_eventCallback) [[likely]] {
+            auto event{ WindowIconifyEvent(iconified) };
+            win->m_eventCallback(event);
+        }
+        });
 }
 
-void Window::cursorPositionCallback(GLFWwindow* handle, double x, double y) {
-    auto* window = static_cast<Window*>(glfwGetWindowUserPointer(handle));
-    if (window != nullptr && window->m_cursorPositionCallback) {
-        window->m_cursorPositionCallback(x, y);
-    }
+void Window::registerFramebufferSizeCallback() {
+    glfwSetFramebufferSizeCallback(
+        (GLFWwindow*)m_handle, [](GLFWwindow* window, int width, int height) {
+            Window* win{ reinterpret_cast<Window*>(glfwGetWindowUserPointer(window)) };
+            win->m_framebufferWidth = static_cast<uint32_t>(width);
+            win->m_framebufferHeight = static_cast<uint32_t>(height);
+
+            if (win->m_eventCallback) [[likely]] {
+                auto event{ WindowFramebufferResizeEvent(width, height) };
+                win->m_eventCallback(event);
+            }
+        });
 }
 
-void Window::scrollCallback(GLFWwindow* handle, double xoffset, double yoffset) {
-    auto* window = static_cast<Window*>(glfwGetWindowUserPointer(handle));
-    if (window != nullptr && window->m_scrollCallback) {
-        window->m_scrollCallback(xoffset, yoffset);
-    }
+void Window::registerWindowCloseCallback() {
+    glfwSetWindowCloseCallback((GLFWwindow*)m_handle, [](GLFWwindow* window) {
+        Window* win{ reinterpret_cast<Window*>(glfwGetWindowUserPointer(window)) };
+
+        if (win->m_eventCallback) [[likely]] {
+            auto event{ WindowCloseEvent() };
+            win->m_eventCallback(event);
+        }
+        });
 }
 
-void Window::keyCallback(GLFWwindow* handle, int keycode, int scancode, int action, int mods) {
-    auto* window = static_cast<Window*>(glfwGetWindowUserPointer(handle));
-    if (window != nullptr && window->m_keyCallback) {
-        window->m_keyCallback(keycode, scancode, action, mods);
-    }
+void Window::registerKeyCallback() {
+    glfwSetKeyCallback(
+        (GLFWwindow*)m_handle, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+            Window* win{ reinterpret_cast<Window*>(glfwGetWindowUserPointer(window)) };
+
+            if (win->m_eventCallback) [[likely]] {
+                const auto keyCode{ toKeyCode(key) };
+
+                switch (action) {
+                case GLFW_PRESS: {
+                    auto event{ KeyPressEvent(keyCode, false) };
+                    win->m_eventCallback(event);
+                } break;
+                case GLFW_RELEASE: {
+                    auto event{ KeyReleaseEvent(keyCode) };
+                    win->m_eventCallback(event);
+                } break;
+                case GLFW_REPEAT: {
+                    auto event{ KeyPressEvent(keyCode, true) };
+                    win->m_eventCallback(event);
+                } break;
+                }
+            }
+        });
 }
 
-void Window::characterCallback(GLFWwindow* handle, unsigned int codepoint) {
-    auto* window = static_cast<Window*>(glfwGetWindowUserPointer(handle));
-    if (window != nullptr && window->m_characterCallback) {
-        window->m_characterCallback(codepoint);
-    }
+void Window::registerCharCallback() {
+    glfwSetCharCallback((GLFWwindow*)m_handle, [](GLFWwindow* window, uint32_t codepoint) {
+        Window* win{ reinterpret_cast<Window*>(glfwGetWindowUserPointer(window)) };
+
+        if (win->m_eventCallback) [[likely]] {
+            auto event{ KeyTypeEvent(codepoint) };
+            win->m_eventCallback(event);
+        }
+        });
+}
+
+void Window::registerCursorPosCallback() {
+    glfwSetCursorPosCallback((GLFWwindow*)m_handle, [](GLFWwindow* window, double x, double y) {
+        Window* win{ reinterpret_cast<Window*>(glfwGetWindowUserPointer(window)) };
+
+        if (win->m_eventCallback) [[likely]] {
+            auto event{ MouseMoveEvent(static_cast<float>(x), static_cast<float>(y)) };
+            win->m_eventCallback(event);
+        }
+        });
+}
+
+void Window::registerScrollCallback() {
+    glfwSetScrollCallback(
+        (GLFWwindow*)m_handle, [](GLFWwindow* window, double xOffset, double yOffset) {
+            Window* win{ reinterpret_cast<Window*>(glfwGetWindowUserPointer(window)) };
+
+            if (win->m_eventCallback) [[likely]] {
+                auto event{ MouseScrollEvent(static_cast<float>(xOffset), static_cast<float>(yOffset)) };
+                win->m_eventCallback(event);
+            }
+        });
+}
+
+void Window::registerMouseButtonCallback() {
+    glfwSetMouseButtonCallback(
+        (GLFWwindow*)m_handle, [](GLFWwindow* window, int button, int action, int mods) {
+            Window* win{ reinterpret_cast<Window*>(glfwGetWindowUserPointer(window)) };
+
+            if (win->m_eventCallback) [[likely]] {
+                const auto mouseButton{ toMouseButton(button) };
+
+                switch (action) {
+                case GLFW_PRESS: {
+                    auto event{ MouseButtonPressEvent(mouseButton) };
+                    win->m_eventCallback(event);
+                } break;
+                case GLFW_RELEASE: {
+                    auto event{ MouseButtonReleaseEvent(mouseButton) };
+                    win->m_eventCallback(event);
+                } break;
+                case GLFW_REPEAT: {
+                    auto event{ MouseButtonHoldEvent(mouseButton) };
+                    win->m_eventCallback(event);
+                } break;
+                }
+            }
+        });
 }
 
 void Window::destroyNativeWindow() {
     if (m_handle != nullptr) {
-        glfwDestroyWindow(m_handle);
+        glfwDestroyWindow((GLFWwindow*)m_handle);
         m_handle = nullptr;
     }
 }
