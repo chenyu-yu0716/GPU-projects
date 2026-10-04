@@ -10,7 +10,7 @@ public:
     Category getCategoryBitmask() const noexcept override final {
         using T = std::underlying_type_t<Category>;
 
-        T bitmask = { static_cast<T>(Category::Mouse) | static_cast<T>(Category::Input) };
+        T bitmask = {static_cast<T>(Category::Mouse) | static_cast<T>(Category::Input)};
         return static_cast<Category>(bitmask);
     }
 };
@@ -20,14 +20,15 @@ public:
     Category getCategoryBitmask() const noexcept override final {
         using T = std::underlying_type_t<Category>;
 
-        T bitmask = { static_cast<T>(Category::MouseButton) | static_cast<T>(Category::Input) };
+        T bitmask = {static_cast<T>(Category::MouseButton) | static_cast<T>(Category::Input)};
         return static_cast<Category>(bitmask);
     }
 };
 
 class MouseMoveEvent final : public MouseEvent {
 public:
-    MouseMoveEvent(float x, float y) : m_position{ x, y } {};
+    MouseMoveEvent(float x, float y)
+        : m_position{x, y} {};
 
     float getX() const noexcept {
         return m_position.first;
@@ -46,8 +47,8 @@ public:
     };
 
     std::string getInfo() const override {
-        const auto x = m_position.first;
-        const auto y = m_position.second;
+        auto const x = m_position.first;
+        auto const y = m_position.second;
         return "MouseMoveEvent: " + std::to_string(x) + " " + std::to_string(y);
     }
 
@@ -57,7 +58,8 @@ private:
 
 class MouseScrollEvent final : public MouseEvent {
 public:
-    MouseScrollEvent(float scrollX, float scrollY) : m_scroll{ scrollX, scrollY } {}
+    MouseScrollEvent(float scrollX, float scrollY)
+        : m_scroll{scrollX, scrollY} {}
 
     float getScrollX() const noexcept {
         return m_scroll.first;
@@ -76,8 +78,8 @@ public:
     };
 
     std::string getInfo() const override {
-        const auto x = m_scroll.first;
-        const auto y = m_scroll.second;
+        auto const x = m_scroll.first;
+        auto const y = m_scroll.second;
         return "MouseScrollEvent: " + std::to_string(x) + " " + std::to_string(y);
     }
 
@@ -87,7 +89,8 @@ private:
 
 class MouseButtonPressEvent final : public MouseButtonEvent {
 public:
-    MouseButtonPressEvent(MouseButton button) : m_button(button) {}
+    MouseButtonPressEvent(MouseButton button)
+        : m_button(button) {}
 
     MouseButton getButton() const noexcept {
         return m_button;
@@ -107,7 +110,8 @@ private:
 
 class MouseButtonReleaseEvent final : public MouseButtonEvent {
 public:
-    MouseButtonReleaseEvent(MouseButton button) : m_button(button) {}
+    MouseButtonReleaseEvent(MouseButton button)
+        : m_button(button) {}
 
     MouseButton getButton() const noexcept {
         return m_button;
@@ -127,7 +131,8 @@ private:
 
 class MouseButtonHoldEvent final : public MouseButtonEvent {
 public:
-    MouseButtonHoldEvent(MouseButton button) : m_button(button) {}
+    MouseButtonHoldEvent(MouseButton button)
+        : m_button(button) {}
 
     MouseButton getButton() const noexcept {
         return m_button;

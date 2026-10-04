@@ -14,8 +14,8 @@ namespace gpu {
 class GraphicsBufferResource final : public GraphicsResource {
 public:
     GraphicsBufferResource(gfx::Buffer const& buffer, RegisterFlags flags) {
-        CHECK_CUDA(cudaGraphicsGLRegisterBuffer(
-            getResourceAddress(), buffer.getNativeHandle(), static_cast<uint32_t>(flags)));
+        CHECK_CUDA(
+            cudaGraphicsGLRegisterBuffer(getResourceAddress(), buffer.getNativeHandle(), static_cast<uint32_t>(flags)));
     }
 
     GraphicsBufferResource(GraphicsBufferResource&&) noexcept = default;

@@ -29,8 +29,8 @@ public:
     }
 
 private:
-    TimePoint m_lastTimestamp{ Clock::now() };
-    Duration m_totalTime{ Duration::zero() };
+    TimePoint m_lastTimestamp{Clock::now()};
+    Duration m_totalTime{Duration::zero()};
 
 private:
     static double toSeconds(Duration const& duration) noexcept {

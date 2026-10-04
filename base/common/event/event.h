@@ -33,7 +33,7 @@ public:
     };
 
 public:
-    bool isHandled{ false };
+    bool isHandled{false};
 
 public:
     virtual ~Event() = default;

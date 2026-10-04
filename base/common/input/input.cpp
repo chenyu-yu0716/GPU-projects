@@ -18,7 +18,9 @@ static std::size_t getIndex(MouseButton button) noexcept {
 }
 
 Input::Input(Window& window)
-    : m_window(window), m_mousePosition{ 0.0f, 0.0f }, m_mouseScroll{ 0.0f, 0.0f } {
+    : m_window(window)
+    , m_mousePosition{0.0f, 0.0f}
+    , m_mouseScroll{0.0f, 0.0f} {
     m_keyStates.fill(KeyState::None);
     m_mouseButtonStates.fill(MouseButtonState::None);
 }
@@ -64,11 +66,11 @@ std::pair<float, float> Input::getMousePosition() const noexcept {
 }
 
 void Input::setMousePosition(float x, float y) {
-    auto* window{ static_cast<GLFWwindow*>(m_window.handle()) };
+    auto* window{static_cast<GLFWwindow*>(m_window.handle())};
     if (window != nullptr) {
         glfwSetCursorPos(window, x, y);
     }
-    m_mousePosition = { x, y };
+    m_mousePosition = {x, y};
 }
 
 float Input::getMouseScrollX() const noexcept {
@@ -84,41 +86,48 @@ std::pair<float, float> Input::getMouseScroll() const noexcept {
 }
 
 CursorMode Input::getCursorMode() const {
-    auto* window{ static_cast<GLFWwindow*>(m_window.handle()) };
+    auto* window{static_cast<GLFWwindow*>(m_window.handle())};
     if (window == nullptr) {
         return CursorMode::Normal;
     }
 
     switch (glfwGetInputMode(window, GLFW_CURSOR)) {
-    case GLFW_CURSOR_HIDDEN: return CursorMode::Hidden;
-    case GLFW_CURSOR_DISABLED: return CursorMode::Disabled;
+    case GLFW_CURSOR_HIDDEN:
+        return CursorMode::Hidden;
+    case GLFW_CURSOR_DISABLED:
+        return CursorMode::Disabled;
     }
 
     return CursorMode::Normal;
 }
 
 void Input::setCursorMode(CursorMode mode) {
-    auto* window{ static_cast<GLFWwindow*>(m_window.handle()) };
+    auto* window{static_cast<GLFWwindow*>(m_window.handle())};
     if (window == nullptr) {
         return;
     }
 
     switch (mode) {
-    case CursorMode::Normal: glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); break;
-    case CursorMode::Hidden: glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN); break;
-    case CursorMode::Disabled: glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); break;
+    case CursorMode::Normal:
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        break;
+    case CursorMode::Hidden:
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+        break;
+    case CursorMode::Disabled:
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        break;
     }
 }
 
 void Input::printKeyStates() const {
     for (std::size_t i = 0; i < m_keyStates.size(); ++i) {
         if (m_keyStates[i] != KeyState::None) {
-            std::cout << std::format(
-                "KeyCode {} ({}) state {} ({})\n",
-                i,
-                toString(static_cast<KeyCode>(i)),
-                static_cast<int>(m_keyStates[i]),
-                toString(m_keyStates[i]));
+            std::cout << std::format("KeyCode {} ({}) state {} ({})\n",
+                                     i,
+                                     toString(static_cast<KeyCode>(i)),
+                                     static_cast<int>(m_keyStates[i]),
+                                     toString(m_keyStates[i]));
         }
     }
 }
@@ -126,12 +135,11 @@ void Input::printKeyStates() const {
 void Input::printMouseButtonStates() const {
     for (std::size_t i = 0; i < m_mouseButtonStates.size(); ++i) {
         if (m_mouseButtonStates[i] != MouseButtonState::None) {
-            std::cout << std::format(
-                "MouseButton {} ({}) state {} ({})\n",
-                i,
-                toString(static_cast<MouseButton>(i)),
-                static_cast<int>(m_mouseButtonStates[i]),
-                toString(m_mouseButtonStates[i]));
+            std::cout << std::format("MouseButton {} ({}) state {} ({})\n",
+                                     i,
+                                     toString(static_cast<MouseButton>(i)),
+                                     static_cast<int>(m_mouseButtonStates[i]),
+                                     toString(m_mouseButtonStates[i]));
         }
     }
 }
@@ -143,47 +151,53 @@ void Input::processEvent(Event& event) noexcept {
             return;
         }
 
-        KeyState state{ KeyState::None };
+        KeyState state{KeyState::None};
         switch (event.getType()) {
         case Event::Type::KeyPress:
-            state = static_cast<const KeyPressEvent&>(event).isRepeated() ?
-                KeyState::Held : KeyState::Pressed;
+            state = static_cast<KeyPressEvent const&>(event).isRepeated() ? KeyState::Held : KeyState::Pressed;
             break;
-        case Event::Type::KeyRelease: state = KeyState::Released; break;
-        case Event::Type::KeyType: state = KeyState::Pressed; break;
-        default: break;
+        case Event::Type::KeyRelease:
+            state = KeyState::Released;
+            break;
+        case Event::Type::KeyType:
+            state = KeyState::Pressed;
+            break;
+        default:
+            break;
         }
 
-        updateKeyState(static_cast<const KeyboardEvent&>(event).getKeyCode(), state);
+        updateKeyState(static_cast<KeyboardEvent const&>(event).getKeyCode(), state);
     }
     else if (event.isInCategory(Event::Category::Mouse)) {
         switch (event.getType()) {
         case Event::Type::MouseMove:
-            m_mousePosition = static_cast<const MouseMoveEvent&>(event).getPosition();
+            m_mousePosition = static_cast<MouseMoveEvent const&>(event).getPosition();
             break;
         case Event::Type::MouseScroll:
-            m_mouseScroll = static_cast<const MouseScrollEvent&>(event).getScroll();
+            m_mouseScroll = static_cast<MouseScrollEvent const&>(event).getScroll();
             break;
-        default: break;
+        default:
+            break;
         }
     }
     else if (event.isInCategory(Event::Category::MouseButton)) {
-        MouseButtonState state{ MouseButtonState::None };
-        MouseButton button{ MouseButton::Unknown };
+        MouseButtonState state{MouseButtonState::None};
+        MouseButton button{MouseButton::Unknown};
         switch (event.getType()) {
         case Event::Type::MouseButtonPress:
             state = MouseButtonState::Pressed;
-            button = static_cast<const MouseButtonPressEvent&>(event).getButton();
+            button = static_cast<MouseButtonPressEvent const&>(event).getButton();
             break;
         case Event::Type::MouseButtonHold:
             state = MouseButtonState::Held;
-            button = static_cast<const MouseButtonHoldEvent&>(event).getButton();
+            button = static_cast<MouseButtonHoldEvent const&>(event).getButton();
             break;
         case Event::Type::MouseButtonRelease:
             state = MouseButtonState::Released;
-            button = static_cast<const MouseButtonReleaseEvent&>(event).getButton();
+            button = static_cast<MouseButtonReleaseEvent const&>(event).getButton();
             break;
-        default: break;
+        default:
+            break;
         }
 
         if (state != MouseButtonState::None) {
@@ -212,7 +226,7 @@ void Input::updateMouseButtonState(MouseButton button, MouseButtonState state) n
 }
 
 void Input::forwardMouseStates() noexcept {
-    m_mouseScroll = { 0.0f, 0.0f };
+    m_mouseScroll = {0.0f, 0.0f};
 
     for (auto& state : m_mouseButtonStates) {
         if (state == MouseButtonState::Pressed) {

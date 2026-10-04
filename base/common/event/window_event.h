@@ -14,7 +14,8 @@ public:
 
 class WindowResizeEvent final : public WindowEvent {
 public:
-    WindowResizeEvent(uint32_t width, uint32_t height) : m_extent{ width, height } {}
+    WindowResizeEvent(uint32_t width, uint32_t height)
+        : m_extent{width, height} {}
 
     uint32_t getWidth() const noexcept {
         return m_extent.first;
@@ -33,8 +34,7 @@ public:
     };
 
     std::string getInfo() const override {
-        return "WindowResizeEvent: " + std::to_string(m_extent.first) + ", "
-            + std::to_string(m_extent.second);
+        return "WindowResizeEvent: " + std::to_string(m_extent.first) + ", " + std::to_string(m_extent.second);
     }
 
 private:
@@ -43,7 +43,8 @@ private:
 
 class WindowFramebufferResizeEvent final : public WindowEvent {
 public:
-    WindowFramebufferResizeEvent(uint32_t width, uint32_t height) : m_extent{ width, height } {}
+    WindowFramebufferResizeEvent(uint32_t width, uint32_t height)
+        : m_extent{width, height} {}
 
     uint32_t getWidth() const noexcept {
         return m_extent.first;
@@ -62,8 +63,8 @@ public:
     };
 
     std::string getInfo() const override {
-        return "WindowFramebufferResizeEvent: " + std::to_string(m_extent.first) + ", "
-            + std::to_string(m_extent.second);
+        return "WindowFramebufferResizeEvent: " + std::to_string(m_extent.first) + ", " +
+               std::to_string(m_extent.second);
     }
 
 private:
@@ -83,7 +84,8 @@ public:
 
 class WindowIconifyEvent final : public WindowEvent {
 public:
-    WindowIconifyEvent(bool iconified) : m_iconified(iconified) {}
+    WindowIconifyEvent(bool iconified)
+        : m_iconified(iconified) {}
 
     bool iconified() const noexcept {
         return m_iconified;

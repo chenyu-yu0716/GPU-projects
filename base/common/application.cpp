@@ -9,9 +9,7 @@ Application::Application(Config const& config)
         std::filesystem::current_path(config.assetRootDir);
     }
 
-    m_window.setEventCallback([this](Event& event) {
-        onEvent(event);
-    });
+    m_window.setEventCallback([this](Event& event) { onEvent(event); });
 }
 
 void Application::run() {
@@ -50,23 +48,17 @@ void Application::onEvent(Event& event) {
         m_input.processEvent(event);
     }
     else if (event.isInCategory(Event::Category::Window)) {
-        EventDispatcher dispatcher{ event };
-        dispatcher.dispatch<WindowCloseEvent>([this](WindowCloseEvent& e) {
-            return onWindowClose(e);
-            });
-        dispatcher.dispatch<WindowResizeEvent>([this](WindowResizeEvent& e) {
-            return onWindowResize(e);
-            });
-        dispatcher.dispatch<WindowIconifyEvent>([this](WindowIconifyEvent& e) {
-            return onWindowIconify(e);
-            });
+        EventDispatcher dispatcher{event};
+        dispatcher.dispatch<WindowCloseEvent>([this](WindowCloseEvent& e) { return onWindowClose(e); });
+        dispatcher.dispatch<WindowResizeEvent>([this](WindowResizeEvent& e) { return onWindowResize(e); });
+        dispatcher.dispatch<WindowIconifyEvent>([this](WindowIconifyEvent& e) { return onWindowIconify(e); });
     }
 
     handleEvent(event);
 }
 
 bool Application::onWindowResize(WindowResizeEvent& event) {
-    const auto& [width, height] {event.getExtent()};
+    auto const& [width, height]{event.getExtent()};
     if (width == 0 || height == 0) {
         return false;
     }

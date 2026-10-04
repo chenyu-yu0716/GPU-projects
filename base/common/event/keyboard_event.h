@@ -14,19 +14,22 @@ public:
     Category getCategoryBitmask() const noexcept override final {
         using T = std::underlying_type_t<Category>;
 
-        T bitmask = { static_cast<T>(Category::Keyboard) | static_cast<T>(Category::Input) };
+        T bitmask = {static_cast<T>(Category::Keyboard) | static_cast<T>(Category::Input)};
         return static_cast<Category>(bitmask);
     }
 
 protected:
     KeyCode m_code;
 
-    KeyboardEvent(KeyCode code) : m_code{ code } {}
+    KeyboardEvent(KeyCode code)
+        : m_code{code} {}
 };
 
 class KeyPressEvent final : public KeyboardEvent {
 public:
-    KeyPressEvent(KeyCode code, bool isRepeated) : KeyboardEvent(code), m_isRepeated{ isRepeated } {}
+    KeyPressEvent(KeyCode code, bool isRepeated)
+        : KeyboardEvent(code)
+        , m_isRepeated{isRepeated} {}
 
     bool isRepeated() const noexcept {
         return m_isRepeated;
@@ -37,7 +40,7 @@ public:
     };
 
     std::string getInfo() const override {
-        auto info{ "KeyPressEvent: " + std::to_string(static_cast<int>(m_code)) };
+        auto info{"KeyPressEvent: " + std::to_string(static_cast<int>(m_code))};
         if (m_isRepeated) {
             info += " repeated";
         }
@@ -51,7 +54,8 @@ private:
 
 class KeyReleaseEvent final : public KeyboardEvent {
 public:
-    KeyReleaseEvent(const KeyCode keycode) : KeyboardEvent(keycode) {}
+    KeyReleaseEvent(KeyCode const keycode)
+        : KeyboardEvent(keycode) {}
 
     Type getType() const noexcept override {
         return Event::Type::KeyRelease;
@@ -64,7 +68,8 @@ public:
 
 class KeyTypeEvent final : public Event {
 public:
-    KeyTypeEvent(uint32_t codepoint) : m_codepoint(codepoint) {}
+    KeyTypeEvent(uint32_t codepoint)
+        : m_codepoint(codepoint) {}
 
     uint32_t getUnicode() const noexcept {
         return m_codepoint;
@@ -73,7 +78,7 @@ public:
     Category getCategoryBitmask() const noexcept override final {
         using T = std::underlying_type_t<Category>;
 
-        T bitmask = { static_cast<T>(Category::Keyboard) | static_cast<T>(Category::Input) };
+        T bitmask = {static_cast<T>(Category::Keyboard) | static_cast<T>(Category::Input)};
         return static_cast<Category>(bitmask);
     }
 

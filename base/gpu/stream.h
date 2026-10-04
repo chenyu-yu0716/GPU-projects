@@ -24,10 +24,7 @@ public:
     }
 
     Stream(Flags flags, int priority) {
-        CHECK_CUDA(cudaStreamCreateWithPriority(
-                &m_stream,
-                static_cast<uint32_t>(flags),
-                priority));
+        CHECK_CUDA(cudaStreamCreateWithPriority(&m_stream, static_cast<uint32_t>(flags), priority));
     }
 
     Stream(Stream&& other) noexcept
@@ -62,7 +59,7 @@ public:
     }
 
 private:
-    cudaStream_t m_stream{ nullptr };
+    cudaStream_t m_stream{nullptr};
 };
 
 } // namespace gpu

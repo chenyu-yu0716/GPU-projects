@@ -10,25 +10,25 @@ public:
     using EventHandler = std::function<void()>;
 
 public:
-    void push(const EventHandler& eventHandler) {
-        std::lock_guard<std::mutex> lockGuard{ m_mutex };
+    void push(EventHandler const& eventHandler) {
+        std::lock_guard<std::mutex> lockGuard{m_mutex};
         m_queue.push(eventHandler);
     }
 
     void push(EventHandler&& eventHandler) {
-        std::lock_guard<std::mutex> lockGuard{ m_mutex };
+        std::lock_guard<std::mutex> lockGuard{m_mutex};
         m_queue.push(std::move(eventHandler));
     }
 
     void processEvents() {
         std::queue<EventHandler> pendingQueue;
         /* swap all elements of queue to a pending queue */ {
-            std::lock_guard<std::mutex> lockGuard{ m_mutex };
+            std::lock_guard<std::mutex> lockGuard{m_mutex};
             pendingQueue.swap(m_queue);
         }
 
         while (!pendingQueue.empty()) {
-            auto eventHandler{ std::move(pendingQueue.front()) };
+            auto eventHandler{std::move(pendingQueue.front())};
             pendingQueue.pop();
             eventHandler();
         }

@@ -89,7 +89,7 @@ public:
 
     void swapBuffers() const;
 
-    void setEventCallback(const EventCallbackFunc& callback);
+    void setEventCallback(EventCallbackFunc const& callback);
 
 private:
     void* m_handle = nullptr;

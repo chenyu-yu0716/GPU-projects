@@ -7,14 +7,13 @@
 
 class EventDispatcher {
 public:
-    template <typename EventType>
-    using EventHandleFunc = std::function<bool(EventType&)>;
+    template <typename EventType> using EventHandleFunc = std::function<bool(EventType&)>;
 
 public:
-    EventDispatcher(Event& event) : m_event(event) {}
+    EventDispatcher(Event& event)
+        : m_event(event) {}
 
-    template <typename EventType>
-    bool dispatch(EventHandleFunc<EventType> handleEvent) {
+    template <typename EventType> bool dispatch(EventHandleFunc<EventType> handleEvent) {
         if (typeid(EventType) != typeid(m_event)) {
             return false;
         }

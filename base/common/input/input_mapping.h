@@ -156,18 +156,14 @@ enum class MouseButtonState : uint8_t {
     Released = 3,
 };
 
-enum class CursorMode : uint8_t {
-    Normal = 0,
-    Hidden = 1,
-    Disabled = 2
-};
+enum class CursorMode : uint8_t { Normal = 0, Hidden = 1, Disabled = 2 };
 
-const char* toString(KeyCode keycode) noexcept;
+char const* toString(KeyCode keycode) noexcept;
 
-const char* toString(KeyState state) noexcept;
+char const* toString(KeyState state) noexcept;
 
-const char* toString(MouseButton button) noexcept;
+char const* toString(MouseButton button) noexcept;
 
-const char* toString(MouseButtonState state) noexcept;
+char const* toString(MouseButtonState state) noexcept;
 
-const char* toString(CursorMode mode) noexcept;
+char const* toString(CursorMode mode) noexcept;

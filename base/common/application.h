@@ -43,12 +43,12 @@ protected:
 
 private:
     /* application states */
-    bool m_running{ true };
-    bool m_minimized{ false };
+    bool m_running{true};
+    bool m_minimized{false};
 
     /* delta time */
     Timer m_clock;
-    float m_deltaTime{ 0.0 };
+    float m_deltaTime{0.0};
 
     /* event queue */
     EventQueue m_eventQueue;

@@ -49,7 +49,7 @@ public:
         float elapsedMilliseconds = 0.0f;
         CHECK_CUDA(cudaEventElapsedTime(&elapsedMilliseconds, m_startEvent, m_stopEvent));
 
-        const float elapsedSeconds = elapsedMilliseconds / 1000.0f;
+        float const elapsedSeconds = elapsedMilliseconds / 1000.0f;
         m_totalTimeSeconds += elapsedSeconds;
 
         // The stop event becomes the start event for the next interval.

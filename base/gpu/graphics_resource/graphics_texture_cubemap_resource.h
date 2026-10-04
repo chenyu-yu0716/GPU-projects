@@ -24,8 +24,7 @@ public:
 
     cudaArray_t getMappedArray(gfx::TextureCubemap::Face face, uint32_t mipLevel = 0) const {
         cudaArray_t array{nullptr};
-        CHECK_CUDA(cudaGraphicsSubResourceGetMappedArray(
-            &array, getResource(), static_cast<uint32_t>(face), mipLevel));
+        CHECK_CUDA(cudaGraphicsSubResourceGetMappedArray(&array, getResource(), static_cast<uint32_t>(face), mipLevel));
         return array;
     }
 };
