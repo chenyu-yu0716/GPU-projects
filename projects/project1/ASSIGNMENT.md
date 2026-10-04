@@ -71,12 +71,11 @@ For each sample, map the pixel coordinate to the complex plane using the image
 center, image dimensions, pixel scale, and the existing sub-pixel offsets. The
 Mandelbrot recurrence is
 
-```text
-z(0) = 0
-z(n + 1) = z(n) * z(n) + c
-```
+$$
+z_0 = 0, \qquad z_{n+1} = z_n^2 + c
+$$
 
-Use the supplied escape radius (`|z|² > 256`) and stop after the configured
+Use the supplied escape radius ($|z|^2 > 256$) and stop after the configured
 maximum number of iterations. Escaped samples must use the supplied smooth
 iteration helper; samples that do not escape must be represented as interior
 samples and rendered black by the existing shading path.
@@ -99,17 +98,13 @@ Requirements:
 
 - launch a two-dimensional grid that covers the complete image;
 - perform a bounds check in the kernel so non-multiple image dimensions are
-  safe;
-- report or handle invalid parameters consistently with the existing code;
-- check the kernel launch for errors using the CUDA error utilities already
-  available in the project.
+  safe.
 
 If you implement the optional perturbation or series bonus, pass its data to
 the kernel without copying a full image through the CPU.
 
 The renderer must remain asynchronous with respect to the caller unless a
 synchronization is required by the surrounding resource-ownership contract.
-Do not add a per-pixel CPU fallback.
 
 ### 4.4 Complete the offline renderer
 
@@ -124,8 +119,8 @@ behavior intact.
 The following must work without creating an OpenGL context:
 
 ```text
-project1 --offline
-project1 --offline --width 800 --height 600 --aa 1 --output result.png
+./project1 --offline
+./project1 --offline --width 640 --height 360 --aa 1 --zoom 1 --output result.png
 ```
 
 ### 4.5 Complete the online compute path
@@ -189,9 +184,9 @@ Use offline mode first, because it makes experiments repeatable. Render a
 `640x360` image while increasing the zoom manually, for example:
 
 ```text
-project1 --offline --width 640 --height 360 --aa 0 --zoom 1000
-project1 --offline --width 640 --height 360 --aa 0 --zoom 10000
-project1 --offline --width 640 --height 360 --aa 0 --zoom 100000
+./project1 --offline --width 640 --height 360 --aa 0 --zoom 1000
+./project1 --offline --width 640 --height 360 --aa 0 --zoom 10000
+./project1 --offline --width 640 --height 360 --aa 0 --zoom 100000
 ```
 
 Continue with larger zoom values and observe when ordinary double-precision
