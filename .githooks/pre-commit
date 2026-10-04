@@ -1,0 +1,34 @@
+#!/bin/sh
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+UNAME_S="$(uname -s 2>/dev/null || printf '%s' unknown)"
+
+case "$UNAME_S" in
+    MINGW*|MSYS*|CYGWIN*)
+        PYTHON_SCRIPT="$(cygpath -w "$SCRIPT_DIR/pre_commit.py" 2>/dev/null || printf '%s' "$SCRIPT_DIR/pre_commit.py")"
+        PYTHON3_PATH="$(command -v python3 2>/dev/null || true)"
+        PYTHON_PATH="$(command -v python 2>/dev/null || true)"
+        PY_PATH="$(command -v py 2>/dev/null || true)"
+        PY_EXE_PATH="$(command -v py.exe 2>/dev/null || true)"
+
+        if [ -n "$PY_PATH" ]; then
+            exec py -3 "$PYTHON_SCRIPT"
+        elif [ -n "$PY_EXE_PATH" ]; then
+            exec py.exe -3 "$PYTHON_SCRIPT"
+        elif [ -n "$PYTHON_PATH" ]; then
+            exec python "$PYTHON_SCRIPT"
+        elif [ -n "$PYTHON3_PATH" ] && [ "${PYTHON3_PATH#*WindowsApps}" = "$PYTHON3_PATH" ]; then
+            exec python3 "$PYTHON_SCRIPT"
+        fi
+        ;;
+    *)
+        if command -v python3 >/dev/null 2>&1; then
+            exec python3 "$SCRIPT_DIR/pre_commit.py"
+        elif command -v python >/dev/null 2>&1; then
+            exec python "$SCRIPT_DIR/pre_commit.py"
+        fi
+        ;;
+esac
+
+echo "error: Python not found. Install Python and ensure python, python3, or py is available in PATH." >&2
+exit 1
