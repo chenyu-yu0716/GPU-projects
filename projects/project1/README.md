@@ -3,7 +3,8 @@
 `project1` renders the Mandelbrot set with CUDA. It supports an interactive
 OpenGL mode and a one-shot offline mode that writes an RGBA PNG to disk. See
 the [repository README](../../README.md) for project-wide dependencies and
-build instructions.
+build instructions. The assignment specification is available in
+[ASSIGNMENT.md](ASSIGNMENT.md).
 
 ![Mandelbrot set](screenshots/mandelbrot_set.png)
 
