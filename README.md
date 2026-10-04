@@ -1,56 +1,131 @@
 # GPU-projects
 
-GPU computing assignments and projects for graduate students.
+GPU computing assignments and projects for graduate students. The repository
+uses CMake to build CUDA examples, standalone assignments, and a reusable set
+of CPU, GPU, and OpenGL support modules.
 
-## Shared base sources
+## Repository structure
 
-Shared source modules belong in `base/`. The directory intentionally has no
-`CMakeLists.txt`; each project manually adds the base files it uses to its own
-target and resolves `./base` before falling back to the repository root's
-`base/` directory.
+```text
+.
+├── base/       Shared CPU, GPU, and graphics modules
+├── examples/   Standalone CUDA examples
+├── projects/   Course assignments and larger projects
+└── cmake/      Submission-package helpers
+```
 
-## Graphics base sources
+The `base/` directory is intentionally not a standalone CMake target. Each
+project lists the shared files it uses in its own `CMakeLists.txt`, so
+dependencies remain explicit and submission packages can include only the
+required files.
 
-`base/graphics` requires OpenGL 4.6, GLAD (with OpenGL 4.6, loader, and
-extension support), GLFW, and GLM.
+## Requirements
 
-## Dependency providers
+- CMake 3.25 or newer
+- A C++20 compiler
+- CUDA Toolkit with `nvcc` and the CUDA runtime development files
+- A CUDA-capable GPU and a compatible driver for running CUDA targets
+- vcpkg, or equivalent pre-installed packages, when building targets that use
+  third-party libraries
 
-The project supports both vcpkg and pre-installed dependencies. The committed
-`CMakePresets.json` contains provider-neutral Windows and Linux presets, so it
-does not assume a particular vcpkg installation path.
+## Dependency setup with vcpkg
 
-For vcpkg, set `VCPKG_ROOT` to any bootstrapped vcpkg checkout, copy
-`CMakeUserPresets.json.example` to `CMakeUserPresets.json`, and select the
-matching vcpkg preset. The user preset file is intentionally ignored by Git.
-The repository's `vcpkg.json` then declares the required dependencies and their
-baseline. The template provides Visual Studio, Linux GCC, and Linux Clang
-variants.
-
-For pre-installed dependencies, use a normal preset such as
-`windows-vs-debug` or `linux-gcc-debug`. If the packages are outside CMake's
-default search paths, set `CMAKE_PREFIX_PATH` in `CMakeUserPresets.json` or in
-the configure environment.
-
-For example, a vcpkg configure command is:
+The recommended setup is to clone vcpkg into the repository root:
 
 ```sh
-cmake --preset linux-gcc-debug-vcpkg
+git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
 ```
 
-A project that manually adds graphics source files must also declare and link
-the dependencies in its own `CMakeLists.txt`:
+Bootstrap vcpkg once:
 
-```cmake
-find_package(glad CONFIG REQUIRED)
-find_package(glfw3 CONFIG REQUIRED)
-find_package(glm CONFIG REQUIRED)
+```sh
+# Windows PowerShell
+.\vcpkg\bootstrap-vcpkg.bat
 
-target_link_libraries(<target> PRIVATE glad::glad glfw glm::glm)
+# Linux/macOS
+./vcpkg/bootstrap-vcpkg.sh
 ```
 
-## Standalone submission packages
+Then edit `CMakeUserPresets.json.example`. Replace each
+`$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake` with
+`${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake`, and copy the result to
+`CMakeUserPresets.json`:
 
-Every project in `projects/` provides a `submit_<name>` target. It creates
-`submission/<name>.zip` below that target's build directory, containing the
-project's sources and only the base modules listed in its CMake file.
+```sh
+cp CMakeUserPresets.json.example CMakeUserPresets.json
+```
+
+Choose a `*-vcpkg` configure/build preset afterwards. CMake uses the
+repository's `vcpkg.json` in manifest mode and installs the declared packages
+automatically for the selected triplet.
+
+## Configure and build
+
+The committed `CMakePresets.json` contains provider-neutral presets for Visual
+Studio, GCC, and Clang. After following the vcpkg setup above, use one of the
+`*-vcpkg` presets.
+
+On Windows, the recommended workflow is to open the repository directory
+directly in Visual Studio. In the CMake configuration selector, choose either
+`windows-vs-debug-vcpkg` or `windows-vs-release-vcpkg`, then build the desired
+target from Visual Studio.
+
+From a terminal, the equivalent Windows commands are:
+
+```sh
+cmake --preset windows-vs-release-vcpkg
+cmake --build --preset windows-vs-release-vcpkg
+```
+
+On Linux, use the corresponding preset directly from a terminal:
+
+```sh
+# GCC release
+cmake --preset linux-gcc-release-vcpkg
+cmake --build --preset linux-gcc-release-vcpkg
+```
+
+For debug builds, replace `release` with `debug` in the preset name.
+
+If dependencies are already installed and visible to CMake, use a
+provider-neutral preset such as `linux-gcc-release` instead:
+
+```sh
+cmake --preset linux-gcc-release
+cmake --build --preset linux-gcc-release
+```
+
+## Submission
+
+Every project under `projects/` provides a `submit_<project-name>` target. For
+example, to package `project1`:
+
+On Windows:
+
+```sh
+cmake --build --preset windows-vs-release-vcpkg --target submit_project1
+```
+
+On Linux:
+
+```sh
+cmake --build --preset linux-gcc-release-vcpkg --target submit_project1
+```
+
+The resulting archive is written below the selected preset's binary directory:
+`out/build/<preset>/submission/<project-name>.zip`.
+
+## Project 0: CUDA device query
+
+`projects/project0` is a CUDA Runtime API device-query program. It reports
+properties and capabilities for every detected CUDA device, and checks peer
+access between devices when multiple GPUs are available.
+
+## Project 1: Mandelbrot renderer
+
+`projects/project1` is a Mandelbrot renderer with interactive OpenGL and
+one-shot offline PNG modes. It supports high-precision center/zoom values,
+configurable resolution, and 1x1 or 2x2 sampling. The
+`PROJECT1_OFFLINE_ONLY` CMake option builds it without the online OpenGL
+dependencies. See the [project1 README](projects/project1/README.md) for
+usage, command-line options, controls, and offline-build details.
