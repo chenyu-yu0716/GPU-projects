@@ -129,14 +129,16 @@ cmake --build --preset windows-vs-release-vcpkg --target project1
 ### Standalone build
 
 To configure only `project1`, run the commands below from the repository root.
-This uses the local `vcpkg/` checkout described in the repository README.
+This uses the local `vcpkg/` checkout and the repository-root `vcpkg.json`
+described in the repository README.
 
 On Linux:
 
 ```sh
 cmake -S projects/project1 -B out/build/project1-offline \
     -DPROJECT1_OFFLINE_ONLY=ON \
-    -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake \
+    -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+    -DVCPKG_MANIFEST_DIR="$PWD" \
     -DVCPKG_TARGET_TRIPLET=x64-linux \
     -DCMAKE_BUILD_TYPE=Release
 cmake --build out/build/project1-offline --target project1 --parallel
@@ -147,7 +149,8 @@ On Windows, use `x64-windows` and the Release configuration:
 ```powershell
 cmake -S projects/project1 -B out/build/project1-offline `
     -DPROJECT1_OFFLINE_ONLY=ON `
-    -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake `
+    "-DCMAKE_TOOLCHAIN_FILE=$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+    "-DVCPKG_MANIFEST_DIR=$PWD" `
     -DVCPKG_TARGET_TRIPLET=x64-windows
 cmake --build out/build/project1-offline --target project1 --config Release --parallel
 ```
