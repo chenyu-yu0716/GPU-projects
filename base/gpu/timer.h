@@ -23,7 +23,7 @@ public:
     Timer(Timer&& other) noexcept
         : m_startEvent{std::exchange(other.m_startEvent, nullptr)}
         , m_stopEvent{std::exchange(other.m_stopEvent, nullptr)}
-        , m_totalTimeSeconds{std::exchange(other.m_totalTimeSeconds, 0.0)} {}
+        , m_totalTimeSeconds{std::exchange(other.m_totalTimeSeconds, 0.0f)} {}
 
     Timer& operator=(Timer&& other) noexcept {
         if (this != &other) {
@@ -32,7 +32,7 @@ public:
 
             m_startEvent = std::exchange(other.m_startEvent, nullptr);
             m_stopEvent = std::exchange(other.m_stopEvent, nullptr);
-            m_totalTimeSeconds = std::exchange(other.m_totalTimeSeconds, 0.0);
+            m_totalTimeSeconds = std::exchange(other.m_totalTimeSeconds, 0.0f);
         }
 
         return *this;
