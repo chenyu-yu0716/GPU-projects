@@ -291,6 +291,10 @@ void RHI::setStencilOpSeperate(FaceMode mode, StencilOp sfail, StencilOp dpfail,
         toNativeFaceMode(mode), toNativeStencilOp(sfail), toNativeStencilOp(dpfail), toNativeStencilOp(dppass));
 }
 
+void RHI::enableScissorTest(bool enable) {
+    enable ? glEnable(GL_SCISSOR_TEST) : glDisable(GL_SCISSOR_TEST);
+}
+
 void RHI::setPolygonMode(FaceMode mode, PolygonMode polygonMode) {
     glPolygonMode(toNativeFaceMode(mode), toNativePolygonMode(polygonMode));
 }
@@ -413,6 +417,10 @@ void RHI::drawMeshTasksNV(uint32_t first, uint32_t count) {
 
 void RHI::dispatchCompute(uint32_t numGroupsX, uint32_t numGroupsY, uint32_t numGroupsZ) {
     glDispatchCompute(numGroupsX, numGroupsY, numGroupsZ);
+}
+
+void RHI::finish() {
+    glFinish();
 }
 
 void RHI::drawIndexed(Primitive pt, uint32_t count, uint32_t const* indices) {

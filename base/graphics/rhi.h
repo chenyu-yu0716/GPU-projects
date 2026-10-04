@@ -113,6 +113,9 @@ public:
 
     static void setStencilOpSeperate(FaceMode mode, StencilOp sfail, StencilOp dpfail, StencilOp dppass);
 
+    // scissor
+    static void enableScissorTest(bool enable);
+
     // polygon mode
     static void setPolygonMode(FaceMode mode, PolygonMode polygonMode);
 
@@ -171,6 +174,8 @@ public:
     static void drawMeshTasksNV(uint32_t first, uint32_t count);
 
     static void dispatchCompute(uint32_t numGroupsX, uint32_t numGroupsY, uint32_t numGroupsZ);
+
+    static void finish();
 
     // OpenGL legacy API
     static void drawIndexed(Primitive pt, uint32_t count, uint32_t const* indices);
