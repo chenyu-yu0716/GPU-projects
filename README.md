@@ -33,7 +33,7 @@ required files.
 The recommended setup is to clone vcpkg into the repository root:
 
 ```sh
-git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
+git clone https://github.com/microsoft/vcpkg.git vcpkg
 ```
 
 Bootstrap vcpkg once:
