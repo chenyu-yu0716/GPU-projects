@@ -7,6 +7,8 @@
 #include "input_mapping.h"
 
 class Window;
+class Event;
+class Application;
 
 class Input {
 public:
@@ -51,6 +53,10 @@ public:
     void printMouseButtonStates() const;
 
 private:
+    friend class Application;
+
+    void processEvent(Event& event) noexcept;
+
     Window& m_window;
     std::pair<float, float> m_mousePosition;
     std::pair<float, float> m_mouseScroll;

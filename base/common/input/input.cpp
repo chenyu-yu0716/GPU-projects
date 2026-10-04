@@ -1,5 +1,7 @@
 #include <common/input/input.h>
 #include <common/window.h>
+#include <common/event/keyboard_event.h>
+#include <common/event/mouse_event.h>
 
 #include <format>
 #include <iostream>
@@ -130,6 +132,62 @@ void Input::printMouseButtonStates() const {
                 toString(static_cast<MouseButton>(i)),
                 static_cast<int>(m_mouseButtonStates[i]),
                 toString(m_mouseButtonStates[i]));
+        }
+    }
+}
+
+void Input::processEvent(Event& event) noexcept {
+    if (event.isInCategory(Event::Category::Keyboard)) {
+        // filter key type event
+        if (event.getType() == Event::Type::KeyType) {
+            return;
+        }
+
+        KeyState state{ KeyState::None };
+        switch (event.getType()) {
+        case Event::Type::KeyPress:
+            state = static_cast<const KeyPressEvent&>(event).isRepeated() ?
+                KeyState::Held : KeyState::Pressed;
+            break;
+        case Event::Type::KeyRelease: state = KeyState::Released; break;
+        case Event::Type::KeyType: state = KeyState::Pressed; break;
+        default: break;
+        }
+
+        updateKeyState(static_cast<const KeyboardEvent&>(event).getKeyCode(), state);
+    }
+    else if (event.isInCategory(Event::Category::Mouse)) {
+        switch (event.getType()) {
+        case Event::Type::MouseMove:
+            m_mousePosition = static_cast<const MouseMoveEvent&>(event).getPosition();
+            break;
+        case Event::Type::MouseScroll:
+            m_mouseScroll = static_cast<const MouseScrollEvent&>(event).getScroll();
+            break;
+        default: break;
+        }
+    }
+    else if (event.isInCategory(Event::Category::MouseButton)) {
+        MouseButtonState state{ MouseButtonState::None };
+        MouseButton button{ MouseButton::Unknown };
+        switch (event.getType()) {
+        case Event::Type::MouseButtonPress:
+            state = MouseButtonState::Pressed;
+            button = static_cast<const MouseButtonPressEvent&>(event).getButton();
+            break;
+        case Event::Type::MouseButtonHold:
+            state = MouseButtonState::Held;
+            button = static_cast<const MouseButtonHoldEvent&>(event).getButton();
+            break;
+        case Event::Type::MouseButtonRelease:
+            state = MouseButtonState::Released;
+            button = static_cast<const MouseButtonReleaseEvent&>(event).getButton();
+            break;
+        default: break;
+        }
+
+        if (state != MouseButtonState::None) {
+            updateMouseButtonState(button, state);
         }
     }
 }

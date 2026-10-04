@@ -17,7 +17,7 @@
 /*************************************************************************************************/
 /*                                       GLFW Input Interpretion                                 */
 /*************************************************************************************************/
-static KeyCode toKeyCode(uint32_t glfwKeyCode) {
+static KeyCode toKeyCode(int glfwKeyCode) {
     switch (glfwKeyCode) {
     case GLFW_KEY_UNKNOWN: return KeyCode::Unknown;
     case GLFW_KEY_WORLD_1: return KeyCode::Unknown;
