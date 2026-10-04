@@ -35,7 +35,7 @@ protected:
         return m_deltaTime;
     }
 
-    void onEvent(Event& event);
+    void resetClock() noexcept;
 
     virtual void handleEvent(Event& event) = 0;
 
@@ -54,6 +54,8 @@ private:
     EventQueue m_eventQueue;
 
 private:
+    void onEvent(Event& event);
+
     bool onWindowResize(WindowResizeEvent& event);
 
     bool onWindowIconify(WindowIconifyEvent& event);

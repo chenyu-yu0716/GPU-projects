@@ -37,6 +37,10 @@ void Application::close() {
     m_window.close();
 }
 
+void Application::resetClock() noexcept {
+    m_clock.tick();
+}
+
 void Application::onEvent(Event& event) {
 #ifndef NDEBUG
     std::cout << event.getInfo() << std::endl;
