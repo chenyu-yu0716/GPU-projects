@@ -7,6 +7,35 @@ build instructions.
 
 ![Mandelbrot set](screenshots/mandelbrot_set.png)
 
+## Dependencies
+
+`project1` requires the CUDA Toolkit and the following vcpkg manifest
+dependencies:
+
+- Boost.Multiprecision for high-precision camera coordinates
+- STB for writing offline PNG images
+- GLAD, GLFW, and GLM for online OpenGL rendering
+
+The offline-only build does not compile or link the online OpenGL renderer, so
+it does not require GLAD, GLFW, GLM, or a window-system development stack. It
+still requires CUDA, Boost.Multiprecision, and STB.
+
+On Ubuntu or Debian, online OpenGL rendering additionally requires the system
+development packages used by GLFW's X11 backend:
+
+```sh
+sudo apt-get update
+sudo apt-get install -y \
+    pkg-config \
+    libxinerama-dev \
+    libxcursor-dev \
+    xorg-dev \
+    libglu1-mesa-dev
+```
+
+The CMake/vcpkg manifest supplies the C++ libraries; these packages provide
+the X11/OpenGL development files needed while GLFW is built.
+
 ## Build
 
 When building the whole repository, configure and build `project1` from the
