@@ -1,5 +1,7 @@
 #pragma once
 
+#include <common/enum.h>
+
 #include <string>
 #include <type_traits>
 
@@ -22,11 +24,12 @@ public:
     };
 
     enum class Category {
-        None = 0,
-        Input = 1 << 0,
-        Window = 1 << 1,
-        Keyboard = 1 << 2,
-        Mouse = 1 << 3,
+        None = makeBitmaskBit(0u),
+        Input = makeBitmaskBit(1u),
+        Window = makeBitmaskBit(2u),
+        Keyboard = makeBitmaskBit(3u),
+        Mouse = makeBitmaskBit(4u),
+        MouseButton = makeBitmaskBit(5u),
     };
 
 public:

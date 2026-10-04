@@ -15,6 +15,16 @@ public:
     }
 };
 
+class MouseButtonEvent : public Event {
+public:
+    Category getCategoryBitmask() const noexcept override final {
+        using T = std::underlying_type_t<Category>;
+
+        T bitmask = { static_cast<T>(Category::MouseButton) | static_cast<T>(Category::Input) };
+        return static_cast<Category>(bitmask);
+    }
+};
+
 class MouseMoveEvent final : public MouseEvent {
 public:
     MouseMoveEvent(float x, float y) : m_position{ x, y } {};
@@ -75,7 +85,7 @@ private:
     std::pair<float, float> m_scroll;
 };
 
-class MouseButtonPressEvent final : public MouseEvent {
+class MouseButtonPressEvent final : public MouseButtonEvent {
 public:
     MouseButtonPressEvent(MouseButton button) : m_button(button) {}
 
@@ -95,7 +105,7 @@ private:
     MouseButton m_button;
 };
 
-class MouseButtonReleaseEvent final : public MouseEvent {
+class MouseButtonReleaseEvent final : public MouseButtonEvent {
 public:
     MouseButtonReleaseEvent(MouseButton button) : m_button(button) {}
 
@@ -115,7 +125,7 @@ private:
     MouseButton m_button;
 };
 
-class MouseButtonHoldEvent final : public MouseEvent {
+class MouseButtonHoldEvent final : public MouseButtonEvent {
 public:
     MouseButtonHoldEvent(MouseButton button) : m_button(button) {}
 
