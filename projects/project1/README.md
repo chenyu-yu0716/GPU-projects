@@ -178,4 +178,4 @@ cmake --build --preset linux-gcc-release-vcpkg --target submit_project1
 ```
 
 The archive is written to
-`out/build/<preset>/submission/project1.zip`.
+`out/build/<preset>/projects/project1/submission/project1.zip`.

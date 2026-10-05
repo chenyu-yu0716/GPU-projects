@@ -113,7 +113,7 @@ cmake --build --preset linux-gcc-release-vcpkg --target submit_project1
 ```
 
 The resulting archive is written below the selected preset's binary directory:
-`out/build/<preset>/submission/<project-name>.zip`.
+`out/build/<preset>/projects/<project-name>/submission/<project-name>.zip`.
 
 ## Project 0: CUDA device query
 
