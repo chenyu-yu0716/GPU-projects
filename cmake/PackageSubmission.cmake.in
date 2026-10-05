@@ -1,31 +1,21 @@
 file(REMOVE_RECURSE "@PROJECT_SUBMISSION_STAGING_DIR@")
 file(MAKE_DIRECTORY "@PROJECT_SUBMISSION_STAGING_DIR@")
 
-file(COPY "@PROJECT_SUBMISSION_SOURCE_DIR@/" DESTINATION "@PROJECT_SUBMISSION_STAGING_DIR@"
-     PATTERN "*.zip" EXCLUDE
-     PATTERN "report" EXCLUDE)
+file(COPY "@PROJECT_SUBMISSION_SOURCE_DIR@/CMakeLists.txt"
+     DESTINATION "@PROJECT_SUBMISSION_STAGING_DIR@")
+
+foreach(project_submission_directory IN ITEMS include src)
+    if(IS_DIRECTORY "@PROJECT_SUBMISSION_SOURCE_DIR@/${project_submission_directory}")
+        file(COPY "@PROJECT_SUBMISSION_SOURCE_DIR@/${project_submission_directory}/"
+             DESTINATION "@PROJECT_SUBMISSION_STAGING_DIR@/${project_submission_directory}")
+    endif()
+endforeach()
 
 if(IS_DIRECTORY "@PROJECT_SUBMISSION_SOURCE_DIR@/report")
     file(MAKE_DIRECTORY "@PROJECT_SUBMISSION_STAGING_DIR@/report")
     file(COPY "@PROJECT_SUBMISSION_SOURCE_DIR@/report/"
          DESTINATION "@PROJECT_SUBMISSION_STAGING_DIR@/report")
 endif()
-
-# Remove generated trees explicitly before adding the selected base files
-# below.
-file(REMOVE_RECURSE
-     "@PROJECT_SUBMISSION_STAGING_DIR@/base"
-     "@PROJECT_SUBMISSION_STAGING_DIR@/build"
-     "@PROJECT_SUBMISSION_STAGING_DIR@/Build"
-     "@PROJECT_SUBMISSION_STAGING_DIR@/out"
-     "@PROJECT_SUBMISSION_STAGING_DIR@/submission"
-     "@PROJECT_SUBMISSION_STAGING_DIR@/CMakeFiles"
-     "@PROJECT_SUBMISSION_STAGING_DIR@/.vs"
-     "@PROJECT_SUBMISSION_STAGING_DIR@/.vscode")
-file(REMOVE
-     "@PROJECT_SUBMISSION_STAGING_DIR@/CMakeCache.txt"
-     "@PROJECT_SUBMISSION_STAGING_DIR@/cmake_install.cmake"
-     "@PROJECT_SUBMISSION_STAGING_DIR@/Makefile")
 
 set(project_submission_base_files "@PROJECT_SUBMISSION_BASE_FILES@")
 if(project_submission_base_files)
