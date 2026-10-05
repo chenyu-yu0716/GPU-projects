@@ -16,41 +16,6 @@ Testing/
 /vcpkg_installed/
 /.vcpkg-binary-cache/
 
-# Compiled objects, libraries, and executables
-*.o
-*.obj
-*.lo
-*.slo
-*.la
-*.lai
-*.a
-*.lib
-*.dll
-*.dylib
-*.so
-*.so.*
-*.exe
-*.out
-*.app
-*.exp
-*.ilk
-*.pdb
-*.d
-*.dwo
-*.gch
-*.pch
-*.mod
-*.smod
-
-# CUDA compiler output and profiler reports
-*.ptx
-*.cubin
-*.fatbin
-*.nvvm
-*.nsys-rep
-*.qdrep
-*.nvvp
-
 # IDE and editor state
 .vs/
 .vscode/
