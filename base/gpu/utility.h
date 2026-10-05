@@ -7,6 +7,9 @@
 #include <stdexcept>
 #include <source_location>
 
+#define LOG_CUDA(call) ::gpu::logCudaErrorImpl((call), #call)
+#define CHECK_CUDA(call) ::gpu::checkCudaImpl((call), #call)
+
 namespace gpu {
 
 inline void logCudaErrorImpl(cudaError_t status, char const* cudaCall) {
@@ -33,7 +36,10 @@ inline void checkCudaImpl(cudaError_t status,
     }
 }
 
-} // namespace gpu
+inline void printCudaDeviceName(int index) {
+    cudaDeviceProp properties{};
+    LOG_CUDA(cudaGetDeviceProperties(&properties, index));
+    std::cout << std::format("Using CUDA device {}: {}\n", index, properties.name);
+}
 
-#define LOG_CUDA(call) ::gpu::logCudaErrorImpl((call), #call)
-#define CHECK_CUDA(call) ::gpu::checkCudaImpl((call), #call)
+} // namespace gpu

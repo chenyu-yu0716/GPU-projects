@@ -23,7 +23,9 @@ static void selectOfflineCudaDevice() {
         throw std::runtime_error(
             std::format("No CUDA device is available for offline rendering: {}", cudaGetErrorString(status)));
     }
+
     CHECK_CUDA(cudaSetDevice(0));
+    gpu::printCudaDeviceName(0);
 }
 
 static unsigned char toByte(float value) {

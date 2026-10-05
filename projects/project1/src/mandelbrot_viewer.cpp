@@ -29,6 +29,7 @@ static void selectCudaDeviceForCurrentOpenGLContext() {
     }
 
     CHECK_CUDA(cudaSetDevice(devices[0]));
+    gpu::printCudaDeviceName(devices[0]);
 }
 
 static std::unique_ptr<gfx::GLProgram> createRenderScreenProgram() {
