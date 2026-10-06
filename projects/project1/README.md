@@ -51,7 +51,8 @@ cmake --build --preset linux-gcc-release-vcpkg --target project1
 
 On Windows, the recommended workflow is to open the repository root directly
 in Visual Studio and select the `windows-vs-release-vcpkg` CMake preset. The
-same configuration can be built from a Visual Studio Developer PowerShell:
+same configuration can be built from Developer PowerShell for VS in Windows
+Terminal:
 
 ```powershell
 cmake --preset windows-vs-release-vcpkg
@@ -120,7 +121,8 @@ cmake --preset linux-gcc-release-vcpkg -DPROJECT1_OFFLINE_ONLY=ON
 cmake --build --preset linux-gcc-release-vcpkg --target project1
 ```
 
-On Windows:
+On Windows, run the following commands from Developer PowerShell for VS in
+Windows Terminal:
 
 ```powershell
 cmake --preset windows-vs-release-vcpkg -DPROJECT1_OFFLINE_ONLY=ON
@@ -145,7 +147,8 @@ cmake -S projects/project1 -B out/build/project1-offline \
 cmake --build out/build/project1-offline --target project1 --parallel
 ```
 
-On Windows, use `x64-windows` and the Release configuration:
+On Windows, use `x64-windows` and the Release configuration. Run the following
+commands from Developer PowerShell for VS in Windows Terminal:
 
 ```powershell
 cmake -S projects/project1 -B out/build/project1-offline `
@@ -165,7 +168,8 @@ rendering only, so it must be invoked with `--offline`.
 Run the submission target from the repository root with a configured vcpkg
 build preset.
 
-On Windows:
+On Windows, run the following command from Developer PowerShell for VS in
+Windows Terminal:
 
 ```powershell
 cmake --build --preset windows-vs-release-vcpkg --target submit_project1

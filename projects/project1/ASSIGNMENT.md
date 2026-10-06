@@ -218,8 +218,17 @@ the generated archive.
 
 Do not submit build directories, package-manager checkouts, generated Visual
 Studio files, or other machine-specific artifacts. From a configured
-repository build, use the provided target:
+repository build, use the provided target.
 
-```text
-cmake --build --preset <your-preset> --target submit_project1
+On Windows, run the following command from Developer PowerShell for VS in
+Windows Terminal:
+
+```powershell
+cmake --build --preset windows-vs-release-vcpkg --target submit_project1
+```
+
+On Linux:
+
+```sh
+cmake --build --preset linux-gcc-release-vcpkg --target submit_project1
 ```
