@@ -70,7 +70,8 @@ directly in Visual Studio. In the CMake configuration selector, choose either
 `windows-vs-debug-vcpkg` or `windows-vs-release-vcpkg`, then build the desired
 target from Visual Studio.
 
-From a terminal, the equivalent Windows commands are:
+From Developer PowerShell for VS in Windows Terminal, run the equivalent
+Windows commands:
 
 ```sh
 cmake --preset windows-vs-release-vcpkg
@@ -100,7 +101,8 @@ cmake --build --preset linux-gcc-release
 Every project under `projects/` provides a `submit_<project-name>` target. For
 example, to package `project1`:
 
-On Windows:
+On Windows, run the following command from Developer PowerShell for VS in
+Windows Terminal:
 
 ```sh
 cmake --build --preset windows-vs-release-vcpkg --target submit_project1
