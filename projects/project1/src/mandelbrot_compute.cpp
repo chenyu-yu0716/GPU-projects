@@ -1,3 +1,6 @@
+#include "complex.hpp"
+#include "mandelbrot.h"
+#include "render_paramters.h"
 #include <mandelbrot_compute.h>
 
 #include <algorithm>
@@ -64,6 +67,8 @@ MandelbrotCompute::MandelbrotCompute(int framebufferWidth,
 
 void MandelbrotCompute::setReferenceViewport(int framebufferWidth, int framebufferHeight) {
     // TODO: React to the window resize event
+    m_referenceWidth = framebufferWidth;
+    m_referenceHeight = framebufferHeight;
 }
 
 MandelbrotCompute::FrameInfo MandelbrotCompute::render(float4* output,
@@ -81,10 +86,19 @@ MandelbrotCompute::FrameInfo MandelbrotCompute::render(float4* output,
     // TODO: 1. Fill the RenderParameters according to the current frame states
     // RenderParameters parameters;
     long double const zoomLongDouble = camera.zoom.convert_to<long double>();
-    double const pixcelScale =
+    double const pixelScale =
         (HighPrecisionFloat(4) / (camera.zoom * HighPrecisionFloat(framebufferHeight))).convert_to<double>();
-
+    RenderParameters parameters{
+        .width = framebufferWidth,
+        .height = framebufferHeight,
+        .maxIter = computeMaxIterations(zoomLongDouble),
+        .pixelScale = pixelScale,
+        .antialias = antialias,
+        .palette = palette,
+        .directCenter = toComplex(camera.center),
+    };
     // TODO: 2. Call renderMandelbrotSet to draw the Mandelbrot set into the output buffer
+    renderMandelbrotSet(output, parameters);
 
-    return {zoomLongDouble, 0};
+    return {zoomLongDouble, parameters.maxIter};
 }

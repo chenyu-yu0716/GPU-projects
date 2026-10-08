@@ -49,11 +49,22 @@ void renderMandelbrotSetOffline(OfflineRenderConfig const& config) {
     }
 
     // TODO: 1. Fill RenderParamters according to the input parameters
+    int const maxIter = computeMaxIterations(zoomLongDouble);
+    RenderParameters const parameters{
+        .width = config.width,
+        .height = config.height,
+        .maxIter = maxIter,
+        .pixelScale = pixelScale,
+        .antialias = config.antialias,
+        .palette = palette,
+        .directCenter = toComplex(config.center),
+    };
 
     gpu::Timer timer;
     timer.tick();
 
     // TODO: 2. Call renderMandelbrotSet to draw the Mandelbrot set into the output buffer
+    renderMandelbrotSet(output.data(), parameters);
 
     timer.tock();
 

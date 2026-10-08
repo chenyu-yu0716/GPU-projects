@@ -1,7 +1,9 @@
+#include "complex.hpp"
 #include <mandelbrot.h>
 
 #include <cmath>
 #include <iostream>
+#include <gpu/utility.h>
 
 constexpr double kEscapeRadiusSquared = 256.0;
 
@@ -38,11 +40,37 @@ static __device__ __forceinline__ SampleData sampleMandelbrot(int x,
         (fragmentY - 0.5 * static_cast<double>(parameters.height)) * parameters.pixelScale,
     };
 
-    // TODO: Iterate to get the SampleData, use the following function to generate correct SampleData
+    // Iterate to get the SampleData, use the following function to generate correct SampleData
     // + makeEscapedSample
     // + makeUnescapedSample
-
-    return {true, 1};
+    Complex z = {0.0, 0.0};
+    Complex const c = parameters.directCenter + planeOffset;
+    for (int i = 0; i < parameters.maxIter; ++i) {
+        double const radiusSquared = normSquared(z);
+        if (radiusSquared > kEscapeRadiusSquared) {
+            return makeEscapedSample(i, radiusSquared);
+        }
+        z = z * z + c;
+    }
+    return makeUnescapedSample(parameters.maxIter);
+    /** Naive implementation (not using complex.hpp, pure operation in cpp)
+    Complex z = {0.0, 0.0};
+    Complex const c = parameters.directCenter + planeOffset;
+    for (int i = 0; i < parameters.maxIter; ++i){
+        double reSquared = z.re * z.re;
+        double imSquared = z.im * z.im;
+        double radiusSquared = reSquared + imSquared;
+        if (radiusSquared > kEscapeRadiusSquared) {
+            return makeEscapedSample(i, radiusSquared);
+        }
+        // z = z * z + c
+        double nextRe = reSquared - imSquared + c.re;
+        double nextIm = 2.0 * z.re * z.im + c.im;
+        z.re = nextRe;
+        z.im = nextIm;
+    }
+    return makeUnescapedSample(parameters.maxIter);
+    */
 }
 
 static __device__ __forceinline__ float3 shade(SampleData sample, RenderParameters const& parameters) {
@@ -90,5 +118,10 @@ __global__ void renderMandelbrotSetKernel(float4* __restrict__ output,
 }
 
 void renderMandelbrotSet(float4* output, RenderParameters const& parameters) {
-    // TODO: Launch renderMandelbrotSetKernel here
+    // Launch renderMandelbrotSetKernel here
+    dim3 blockSize{16, 16};
+    dim3 gridSize{(parameters.width + blockSize.x - 1) / blockSize.x,
+                  (parameters.height + blockSize.y - 1) / blockSize.y};
+    renderMandelbrotSetKernel<<<gridSize, blockSize>>>(output, nullptr, nullptr, parameters);
+    CHECK_CUDA(cudaPeekAtLastError());
 }
