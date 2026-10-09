@@ -1,0 +1,17 @@
+reference orbit at the final center: 9698 entries, escaped: False
+300 random samples for each frame at 640x360; wrong = smooth iteration differs from truth by > 0.05
+   t     zoom  maxIter  delta/viewH  rebase/px | perturbation    | direct
+                                               | wrong  worst    | wrong  worst
+   0  1.0e+03     1537        0.438        9.9 |     0  5.3e-08  |     0  3.3e-05
+  20  3.7e+05     2625        0.329        3.1 |     0  3.2e-10  |     0  2.8e-05
+  35  3.1e+07     3441        0.257        3.1 |     0  3.1e-08  |     0  2.2e-02
+  40  1.4e+08     3713        0.235        3.5 |     0  1.2e-07  |     3  1.1e+00
+  50  2.6e+09     4257        0.195        3.0 |     0  1.3e-09  |     2  1.5e-01
+  60  4.9e+10     4801        0.158        4.7 |     0  1.6e-08  |    27  8.1e+00
+  70  9.3e+11     5345        0.125        5.6 |     0  1.5e-06  |    89  7.3e+02
+  78  9.8e+12     5780        0.101        2.9 |     0  1.1e-08  |    46  7.5e+02
+  90  3.4e+14     6433        0.070        4.8 |     0  4.6e-07  |   284      inf
+ 100  6.4e+15     6977        0.049        3.4 |     0  5.3e-07  |   291  1.5e+03
+ 120  2.3e+18     8065        0.018        5.3 |     0  3.1e-07  |   300  2.7e+03
+ 140  8.4e+20     9153        0.002        6.4 |     0  6.2e-06  |   300      inf
+ 150  1.6e+22     9697        0.000        5.6 |     0  7.8e-05  |   300      inf

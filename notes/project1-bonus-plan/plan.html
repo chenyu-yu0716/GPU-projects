@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Project 1 Bonus Plan</title>
+<link rel="stylesheet" href="htmlplan.css">
+<script src="htmlplan.js" defer></script>
+<body>
+
+<header>
+  <h1>Deep Zoom Perturbation in Project 1</h1>
+  <doc-changes new="6" changed="9"></doc-changes>
+  <details class="thread"><summary>Why · 3 requests</summary>
+    <doc-quote via="prompt" from="the user">我们先做 bonus -- assignment 说明的 bonus，先不做加速，做完 bonus 后我们再考虑加速。</doc-quote>
+    <doc-quote via="doc" from="ASSIGNMENT.md §4.5">For bonus credit, implement perturbation or another numerically stable method for the deep zoom used by the default animation. A bonus implementation may maintain a reference orbit and use the perturbation recurrence instead of converting the complete high-precision center to a rounded <code>double</code> value.</doc-quote>
+    <doc-quote via="doc" from="ASSIGNMENT.md §4.3">If you implement the optional perturbation or series bonus, pass its data to the kernel without copying a full image through the CPU.</doc-quote>
+  </details>
+</header>
+
+<main>
+<doc-plan>
+
+<!-- ═════ 1 ═════ -->
+<doc-claim>
+  <p>The frame at zoom 1.6e22 shows the minibrot, not stripes.</p>
+  <doc-shot src="before-after-zoom1.6e22.png" caption="Left: project1 --offline today. Right: a Python prototype of this plan with the same palette. The GPU does not make the right image yet."></doc-shot>
+
+  <doc-claim>
+    <p>The CPU computes one reference orbit at the image center.</p>
+    <doc-calls title="Offline render" caption="Tap the row of computeReferenceOrbit() to open its sketch.">
+<script type="text/plain">
+~ renderMandelbrotSetOffline(config)                  @ projects/project1/src/mandelbrot_offline_render.cpp:35
++   **usePerturbation**(pixelScale)                   @ projects/project1/src/reference_orbit.cpp:30   -- see 3.1
++   **ReferenceOrbit**(config.center, maxIter)        @ projects/project1/src/reference_orbit.cpp:20
++     **computeReferenceOrbit**(center, maxIter)      @ projects/project1/src/reference_orbit.cpp:5
++     cudaMemcpy(host to device)                      @ projects/project1/src/reference_orbit.cpp:24   -- 155 KB, one time
+~   RenderParameters{ …, referenceLength }            @ projects/project1/src/mandelbrot_offline_render.cpp:53
+~   renderMandelbrotSet(output, parameters, orbit)    @ projects/project1/src/mandelbrot_offline_render.cpp:67
+</script>
+    </doc-calls>
+    <doc-claim at="projects/project1/src/reference_orbit.cpp:5">
+      <p><b>reference_orbit.cpp</b> · computeReferenceOrbit()</p>
+      <doc-code title="reference_orbit.cpp · sketch" lang="cpp">
+<script type="text/plain">
+std::vector<Complex> computeReferenceOrbit(HighPrecisionComplex const& center, int maxIterations) {
+    std::vector<Complex> orbit;
+    orbit.reserve(static_cast<size_t>(maxIterations) + 1);
+
+    HighPrecisionComplex z{};
+    for (int i = 0; i <= maxIterations; ++i) {
+        Complex const rounded = toComplex(z);
+        orbit.push_back(rounded);
+        if (normSquared(rounded) > kEscapeRadiusSquared) {
+            break;
+        }
+        z = z * z + center;
+    }
+    return orbit;
+}
+</script>
+        <doc-pin line="7" title="Round each value, not the center">The iteration stays in 100 digits.</doc-pin>
+        <doc-pin line="9" tone="info" title="The orbit can stop early">The kernel rebases at the last entry.</doc-pin>
+      </doc-code>
+    </doc-claim>
+  </doc-claim>
+
+  <doc-claim>
+    <p>Each sample iterates only its offset from the orbit.</p>
+    <doc-code title="mandelbrot.cu · sketch of samplePerturbation()" lang="cpp" hl="12-15,16">
+<script type="text/plain">
+static __device__ __forceinline__ SampleData samplePerturbation(
+    Complex deltaC, Complex const* referenceOrbit, RenderParameters const& parameters) {
+    Complex delta{0.0, 0.0};
+    int index = 0;
+    int const last = parameters.referenceLength - 1;
+    for (int i = 0; i < parameters.maxIter; ++i) {
+        Complex const z = referenceOrbit[index] + delta;
+        double const radiusSquared = normSquared(z);
+        if (radiusSquared > kEscapeRadiusSquared) {
+            return makeEscapedSample(i, radiusSquared);
+        }
+        if (radiusSquared < normSquared(delta) || index == last) {
+            delta = z;
+            index = 0;
+        }
+        delta = (2.0 * referenceOrbit[index] + delta) * delta + deltaC;
+        ++index;
+    }
+    return makeUnescapedSample(parameters.maxIter);
+}
+</script>
+      <doc-pin line="7" title="The full value: orbit entry plus offset">The escape test and the color use it.</doc-pin>
+      <doc-pin line="12" tone="warn" title="Rebase">The offset becomes the full value. The index goes back to 0.</doc-pin>
+      <doc-pin line="16" title="The perturbation recurrence">The offset is small, so a double holds it.</doc-pin>
+    </doc-code>
+    <doc-claim at="projects/project1/src/mandelbrot.cu:46">
+      <p><b>mandelbrot.cu:46</b> · sampleMandelbrot()</p>
+      <doc-code src="projects/project1/src/mandelbrot.cu" lines="36-55" hl="46-55">
+        <doc-pin line="47" tone="risk" title="The cause of the stripes">One pixel is smaller than one step of a double here.</doc-pin>
+      </doc-code>
+    </doc-claim>
+  </doc-claim>
+
+  <doc-claim>
+    <p>The orbit goes to the GPU one time, as 155 KB.</p>
+    <doc-code title="reference_orbit.cpp · sketch" lang="cpp">
+<script type="text/plain">
+ReferenceOrbit::ReferenceOrbit(HighPrecisionComplex const& center, int maxIterations)
+    : m_center(center) {
+    std::vector<Complex> const orbit = computeReferenceOrbit(center, maxIterations);
+    m_orbit.reallocate(orbit.size());   // gpu::Buffer<Complex>
+    CHECK_CUDA(cudaMemcpy(m_orbit.data(), orbit.data(), m_orbit.bytes(), cudaMemcpyHostToDevice));
+}
+</script>
+      <doc-pin line="5" title="9698 entries of 16 bytes">No image data goes through the CPU.</doc-pin>
+    </doc-code>
+  </doc-claim>
+</doc-claim>
+
+<!-- ═════ 2 ═════ -->
+<doc-claim>
+  <p>One reference orbit keeps the full animation correct.</p>
+  <doc-code src="notes/project1-bonus-plan/proto-output.txt" lines="1-17" lang="text" title="proto.py · measured output" caption="The prototype compares the two methods with a 70-digit truth. Perturbation has no wrong sample at any time.">
+    <doc-pin line="8" tone="risk" title="Direct iteration fails first here">Zoom 1.4e8, second 40.</doc-pin>
+    <doc-pin line="5" tone="ok" title="The orbit is far, but the rebase holds">Approximately 10 rebases for each sample.</doc-pin>
+  </doc-code>
+  <doc-note tone="warn"><strong>Risk</strong> The deep frames can render slower than today. Each step does more FP64 work and reads one orbit entry. In the last frame, 45% of the samples run all 9697 steps. Speed is not in this plan.</doc-note>
+
+  <doc-claim>
+    <p>The final center is on screen in each frame.</p>
+    <doc-code src="projects/project1/src/mandelbrot_compute.cpp" lines="39-48" hl="46-48">
+      <doc-pin line="48" title="The camera moves to targetCenter">The distance is 0.44 view heights at most.</doc-pin>
+    </doc-code>
+  </doc-claim>
+
+  <doc-claim>
+    <p>Each frame gives the kernel only <code>cameraDelta</code>.</p>
+    <doc-calls title="Online and video" caption="The constructor computes the orbit one time.">
+<script type="text/plain">
+~ MandelbrotCompute::MandelbrotCompute(…)             @ projects/project1/src/mandelbrot_compute.cpp:53
++   **ReferenceOrbit**(finalCenter, largest maxIter)  @ projects/project1/src/reference_orbit.cpp:20
+
+~ MandelbrotCompute::render(…)                        @ projects/project1/src/mandelbrot_compute.cpp:74
+    cameraAtTime(timeSeconds, …)                      @ projects/project1/src/mandelbrot_compute.cpp:84
++   usePerturbation(pixelScale)                       @ projects/project1/src/reference_orbit.cpp:30
++   cameraDelta = camera.center - orbit.center()      @ projects/project1/src/mandelbrot_compute.cpp:91
+~   renderMandelbrotSet(output, parameters, orbit)    @ projects/project1/src/mandelbrot_compute.cpp:101
+</script>
+    </doc-calls>
+    <doc-claim at="projects/project1/src/mandelbrot_compute.cpp:91">
+      <p><b>mandelbrot_compute.cpp:91</b> · MandelbrotCompute::render()</p>
+      <doc-code diff file="projects/project1/src/mandelbrot_compute.cpp">
+<script type="text/plain">
+@@ -91,11 +91,14 @@
++    bool const perturbation = usePerturbation(pixelScale);
+     RenderParameters parameters{
+         .width = framebufferWidth,
+         .height = framebufferHeight,
+         .maxIter = computeMaxIterations(zoomLongDouble),
+         .pixelScale = pixelScale,
+         .antialias = antialias,
+         .palette = palette,
+         .directCenter = toComplex(camera.center),
++        .cameraDelta = toComplex(camera.center - m_referenceOrbit.center()),
++        .referenceLength = perturbation ? m_referenceOrbit.length() : 0,
+     };
+     // TODO: 2. Call renderMandelbrotSet to draw the Mandelbrot set into the output buffer
+-    renderMandelbrotSet(output, parameters);
++    renderMandelbrotSet(output, parameters, m_referenceOrbit.data());
+</script>
+      </doc-code>
+    </doc-claim>
+  </doc-claim>
+
+  <doc-claim>
+    <p>A resize does not compute the orbit again.</p>
+    <doc-code src="projects/project1/src/mandelbrot_compute.cpp" lines="68-72">
+      <doc-pin line="69" title="The comment changes, the code stays">The orbit does not use the viewport size.</doc-pin>
+    </doc-code>
+  </doc-claim>
+
+  <doc-claim>
+    <p><code>project1_video</code> compiles the new source file.</p>
+    <doc-code diff file="projects/project1_video/CMakeLists.txt" caption="This list is fixed. project1 finds the file with a glob.">
+<script type="text/plain">
+@@ -24,4 +24,5 @@
+ set(PROJECT1_VIDEO_SHARED_SOURCES
+     "${PROJECT1_DIR}/src/mandelbrot.cu"
+     "${PROJECT1_DIR}/src/mandelbrot_compute.cpp"
+-    "${PROJECT1_DIR}/src/palette.cu")
++    "${PROJECT1_DIR}/src/palette.cu"
++    "${PROJECT1_DIR}/src/reference_orbit.cpp")
+</script>
+    </doc-code>
+  </doc-claim>
+</doc-claim>
+
+<!-- ═════ 3 ═════ -->
+<doc-claim>
+  <p>Frames at low zoom keep the image they have today.</p>
+  <doc-mock frame="terminal" title="check 1" w="470" caption="A mockup of the check. The old image comes from commit 542e9db."><template><span class="dim">></span> project1 --offline --zoom 1e6 … --output new_1e6.png
+Offline render completed in 0.41 seconds
+<span class="dim">></span> cmp base_1e6.png new_1e6.png &amp;&amp; echo identical
+<span class="g">identical</span></template></doc-mock>
+
+  <doc-claim>
+    <p>A pixel scale below 1e-10 selects perturbation.</p>
+    <doc-code title="reference_orbit.cpp · sketch" lang="cpp">
+<script type="text/plain">
+// Direct iteration has its first wrong samples near this pixel scale (see claim 2).
+constexpr double kPerturbationPixelScale = 1.0e-10;
+
+bool usePerturbation(double pixelScale) {
+    return pixelScale < kPerturbationPixelScale;
+}
+</script>
+      <doc-pin line="2" title="Zoom 5.6e7 at 720p">Approximately second 37 of the animation.</doc-pin>
+    </doc-code>
+    <doc-ask id="switch">
+      <p>Which frames use perturbation?</p>
+      <label><input type="radio" name="switch" value="1e-10" checked> Pixel scale below 1e-10 <small>before the first wrong sample</small></label>
+      <label><input type="radio" name="switch" value="1e-13"> Pixel scale below 1e-13 <small>later, near the first visible stripes</small></label>
+      <label><input type="radio" name="switch" value="all"> All frames <small>one path; claim 3 goes</small></label>
+    </doc-ask>
+    <div data-if="switch=1e-10"><doc-note tone="info">The two screenshots at zoom 1e9 and 1e12 in <code>report/</code> change. The plan renders them again.</doc-note></div>
+    <div data-if="switch=1e-13"><doc-note tone="warn">Up to 30% of the samples stay wrong from second 40 to second 68.</doc-note></div>
+    <div data-if="switch=all"><doc-note tone="warn">All five screenshots in <code>report/</code> change. The low zoom frames get slower.</doc-note></div>
+  </doc-claim>
+
+  <doc-claim>
+    <p>The kernel uses the direct loop when it gets no orbit.</p>
+    <doc-code diff file="projects/project1/src/mandelbrot.cu" caption="The host sets referenceLength to 0 for a direct frame.">
+<script type="text/plain">
+@@ -43,5 +43,8 @@
+     // Iterate to get the SampleData, use the following function to generate correct SampleData
+     // + makeEscapedSample
+     // + makeUnescapedSample
++    if (referenceOrbit != nullptr && parameters.referenceLength >= 2) {
++        return samplePerturbation(parameters.cameraDelta + planeOffset, referenceOrbit, parameters);
++    }
+     Complex z = {0.0, 0.0};
+     Complex const c = parameters.directCenter + planeOffset;
+</script>
+    </doc-code>
+  </doc-claim>
+
+  <doc-claim>
+    <p>An environment variable forces one path for tests.</p>
+    <doc-code title="reference_orbit.cpp · sketch" lang="cpp" caption="Check 2 needs the two paths at the same zoom.">
+<script type="text/plain">
+bool usePerturbation(double pixelScale) {
+    if (char const* forced = std::getenv("PROJECT1_RENDER_PATH")) {
+        if (std::string_view(forced) == "direct") {
+            return false;
+        }
+        if (std::string_view(forced) == "perturbation") {
+            return true;
+        }
+    }
+    return pixelScale < kPerturbationPixelScale;
+}
+</script>
+    </doc-code>
+  </doc-claim>
+</doc-claim>
+
+<!-- ═════ 4 ═════ -->
+<doc-claim>
+  <p>A CPU render in high precision proves the deep frames.</p>
+  <doc-mock frame="terminal" title="check 3" w="480" caption="A mockup. The script does not exist yet."><template><span class="dim">></span> project1 --offline --width 160 --height 90 --aa 0 \
+    --output gpu.png
+Offline render completed in 0.05 seconds
+<span class="dim">></span> uv run eval/truth.py --zoom 1.6E22 --width 160 \
+    --height 90 --compare gpu.png
+truth: 14400 pixels, 70 digits, maxIter 9697
+compare: 14400 of 14400 pixels agree (2/255 at most)
+<span class="g">PASS</span></template></doc-mock>
+  <doc-ask id="proof">
+    <p>How do we prove the deep frames?</p>
+    <label><input type="radio" name="proof" value="python" checked> A Python script in <code>eval/</code> <small>no new build target; not in the submission</small></label>
+    <label><input type="radio" name="proof" value="cpp"> A C++ target next to <code>project1_video</code> <small>faster, but more code and one more target</small></label>
+    <label><input type="radio" name="proof" value="eye"> Look at the images only <small>claim 4 goes</small></label>
+  </doc-ask>
+
+  <doc-claim>
+    <p>The script iterates each pixel with 70 decimal digits.</p>
+    <doc-code src="notes/project1-bonus-plan/proto.py" lines="38-44" caption="The prototype has this function. truth.py starts from it."></doc-code>
+  </doc-claim>
+
+  <doc-claim>
+    <p>The script reads the colors from <code>palette.cu</code>.</p>
+    <doc-code src="notes/project1-bonus-plan/render.py" lines="39-45" wrap></doc-code>
+  </doc-claim>
+
+  <doc-claim>
+    <p>Five checks must pass before the report.</p>
+    <doc-code title="eval/check-bonus.sh · sketch" lang="sh">
+<script type="text/plain">
+P=out/build/linux-gcc-release-3060/projects/project1/project1
+C="--re -0.743643887 --im 0.131825904 --width 1280 --height 720 --aa 1"
+
+# 1. Low zoom: the PNG is identical to the PNG from commit 542e9db.
+for z in 1 1e3 1e6; do
+  $P --offline $C --zoom $z --output new_$z.png && cmp base_$z.png new_$z.png
+done
+
+# 2. Same zoom, two paths: the images agree.
+PROJECT1_RENDER_PATH=perturbation $P --offline $C --zoom 1e6 --output pert_1e6.png
+uv run eval/truth.py --diff new_1e6.png pert_1e6.png
+
+# 3. Deep zoom at the default center: the GPU agrees with the CPU truth.
+for z in 1e15 1e18 1.6E22; do
+  $P --offline --width 160 --height 90 --aa 0 --zoom $z --output gpu_$z.png
+  uv run eval/truth.py --zoom $z --width 160 --height 90 --compare gpu_$z.png
+done
+
+# 4. Animation: no stripes, and no jump at the switch. Look at the video.
+project1_video --width 640 --height 360 --fps 3 --output check.mp4
+
+# 5. The configuration with PROJECT1_OFFLINE_ONLY=ON compiles and renders.
+</script>
+    </doc-code>
+  </doc-claim>
+</doc-claim>
+
+<!-- ═════ 5 ═════ -->
+<doc-claim>
+  <p>The report explains the reference data and shows a deep frame.</p>
+  <doc-code title="report/REPORT.md · outline sketch" lang="md" hl="6-11">
+<script type="text/plain">
+# Project 1 Report
+## CUDA kernel and pixel mapping
+## 1x1 and 2x2 sampling
+## SSBO interoperation
+## High-precision camera
+## Bonus: perturbation and the reference orbit
+- why double fails: the stripes, and the measured first wrong samples
+- the reference orbit: its center, its length, when the CPU computes it
+- cameraDelta, the recurrence, and the rebase
+- how the orbit gets to the kernel: 155 KB, one time
+- the switch between the direct path and perturbation
+## Offline screenshot and command
+## Performance and known limits
+</script>
+  </doc-code>
+  <doc-ask id="report">
+    <p>How much of <code>REPORT.md</code> does this plan write?</p>
+    <label><input type="radio" name="report" value="full" checked> The full report <small>the file does not exist; the assignment needs it</small></label>
+    <label><input type="radio" name="report" value="bonus"> The bonus section only <small>you write the other sections</small></label>
+  </doc-ask>
+
+  <doc-claim>
+    <p>The report gets one new screenshot at zoom 1.6e22.</p>
+    <doc-tree>
+<script type="text/plain">
+projects/project1/report/
+  + REPORT.md
+  + zoom1.6e22_iter9697_re-1.416707803_im0_aa1_1280x720.png   # the default offline frame
+  ~ zoom1e9_iter4082_re-0.743643887_im0.131825904_aa1_1280x720.png    # if decision 1 keeps 1e-10
+  ~ zoom1e12_iter5358_re-0.743643887_im0.131825904_aa1_1280x720.png   # if decision 1 keeps 1e-10
+    zoom1e0_… zoom1e3_… zoom1e6_…   # direct path, not changed
+</script>
+    </doc-tree>
+  </doc-claim>
+</doc-claim>
+
+<!-- ═════ shared · not changing ═════ -->
+<doc-claim aux="shared">
+  <p>Shared: the parameter block gets one field, and the renderer gets one argument.</p>
+  <doc-schema id="params" lang="cpp" diff title="include/render_paramters.h" caption="cameraDelta exists today, but no code uses it. The block stays trivially copyable.">
+<script type="text/plain">
+ struct RenderParameters {
+     int width = 0;
+     int height = 0;
+     int maxIter = 0;
+     double pixelScale = 0.0;
+     bool antialias = false;
+
+     Palette palette{};
+
+     Complex directCenter{};
+-    Complex cameraDelta{};
++    Complex cameraDelta{};      // camera center minus orbit center
++    int referenceLength = 0;    // orbit entries; 0 selects direct iteration
+ };
+
+ // include/mandelbrot.h
+-void renderMandelbrotSet(float4* output, RenderParameters const& parameters);
++void renderMandelbrotSet(float4* output, RenderParameters const& parameters,
++                         Complex const* referenceOrbit);
+</script>
+  </doc-schema>
+</doc-claim>
+
+<doc-claim aux="scope">
+  <p>Not changing: speed, series approximation, the palette, the command line.</p>
+  <ul>
+    <li>No speed work. That is the next plan.</li>
+    <li>No series approximation. The kernel keeps <code>seriesCoefficients</code> as <code>nullptr</code>.</li>
+    <li>No change to <code>base/</code>, to <code>palette.cu</code>, or to <code>computeMaxIterations()</code>.</li>
+    <li>No new command-line option and no new build target in <code>project1</code>.</li>
+    <li>The SSBO sequence in <code>mandelbrot_viewer.cpp</code> stays.</li>
+    <li>WSL2 cannot run the window. <code>project1_video</code> tests the online path.</li>
+  </ul>
+</doc-claim>
+
+</doc-plan>
+</main>
+</body>
+</html>

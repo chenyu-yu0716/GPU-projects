@@ -4,8 +4,9 @@
 
 - [ ] **解决深度放大的精度问题**（作业可选 bonus）
   - 现象：zoom 超过约 `1e13` 后，`double` 精度不够，画面逐渐变成色块和横条纹；动画 150 秒中大约从第 78 秒开始出现。
-  - 方向：perturbation。在 CPU 上用高精度算一条 reference orbit，kernel 里每个像素只迭代相对参考点的小偏移。`RenderParameters::cameraDelta` 和 kernel 的 `referenceOrbit` 参数就是为此预留的。
-  - 可选的进一步加速：series approximation（kernel 的 `seriesCoefficients` 参数）。
+  - 做法：perturbation。CPU 用高精度在动画终点算一条 reference orbit，kernel 里每个像素只迭代相对它的偏移，偏移过大时 rebase。
+  - 计划：[notes/project1-bonus-plan.html](notes/project1-bonus-plan.html)（用浏览器打开；有三个决定待确认）。页面源文件和 Python 原型在 `notes/project1-bonus-plan/`。
+  - 本轮不做：series approximation 和任何加速，bonus 完成后再考虑。
 
 - [ ] **优化渲染速度**
   - 基线（RTX 5060 Laptop，1280x720，2x2 抗锯齿）：整段动画平均约 0.5 秒一帧，`project1_video` 渲染 4501 帧约需 37 分钟。
