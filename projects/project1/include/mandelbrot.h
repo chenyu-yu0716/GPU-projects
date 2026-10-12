@@ -6,7 +6,7 @@
 #include <render_paramters.h>
 
 void renderMandelbrotSet(float4* output, RenderParameters const& parameters
-                         // add additional arguments if necessary
+                         /* add additional arguments if necessary */
 );
 
 inline int computeMaxIterations(long double zoom) {
