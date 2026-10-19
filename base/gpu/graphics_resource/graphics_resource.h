@@ -22,28 +22,42 @@ public:
 
     void map(cudaStream_t stream = nullptr) {
         CHECK_CUDA(cudaGraphicsMapResources(1, &m_resource, stream));
+        m_mapped = true;
     }
 
     void unmap(cudaStream_t stream = nullptr) {
         CHECK_CUDA(cudaGraphicsUnmapResources(1, &m_resource, stream));
+        m_mapped = false;
+    }
+
+    bool isMapped() const noexcept {
+        return m_mapped;
     }
 
 protected:
     GraphicsResource() noexcept = default;
 
     GraphicsResource(GraphicsResource&& rhs) noexcept
-        : m_resource{std::exchange(rhs.m_resource, nullptr)} {}
+        : m_resource{std::exchange(rhs.m_resource, nullptr)}
+        , m_mapped{std::exchange(rhs.m_mapped, false)} {}
 
     GraphicsResource& operator=(GraphicsResource&& rhs) noexcept {
         if (this != &rhs) {
+            if (m_mapped) {
+                LOG_CUDA(cudaGraphicsUnmapResources(1, &m_resource, nullptr));
+            }
             LOG_CUDA(cudaGraphicsUnregisterResource(m_resource));
             m_resource = std::exchange(rhs.m_resource, nullptr);
+            m_mapped = std::exchange(rhs.m_mapped, false);
         }
 
         return *this;
     }
 
     ~GraphicsResource() noexcept {
+        if (m_mapped) {
+            LOG_CUDA(cudaGraphicsUnmapResources(1, &m_resource, nullptr));
+        }
         LOG_CUDA(cudaGraphicsUnregisterResource(m_resource));
     }
 
@@ -57,6 +71,7 @@ protected:
 
 private:
     cudaGraphicsResource_t m_resource{nullptr};
+    bool m_mapped{false};
 };
 
 ENABLE_BITMASK_OPERATION(GraphicsResource::RegisterFlags);
