@@ -1,0 +1,7 @@
+{
+  "name": "optix-dev",
+  "version": "9.1.0",
+  "description": "OptiX SDK headers for building OptiX applications",
+  "homepage": "https://github.com/NVIDIA/optix-dev",
+  "license": null
+}

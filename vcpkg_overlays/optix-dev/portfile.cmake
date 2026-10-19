@@ -1,0 +1,9 @@
+vcpkg_from_github(
+    OUT_SOURCE_PATH SOURCE_PATH
+    REPO NVIDIA/optix-dev
+    REF "v${VERSION}"
+    SHA512 3d4887d4032487363ac1a382c73d1cc99d77c8ce92751097ca4481b29b3164838cf1e2fa69b67be7eedafea4b217fa4c3ebfd8415046fc14c36973d90f1a5a93
+)
+
+file(INSTALL "${SOURCE_PATH}/include/" DESTINATION "${CURRENT_PACKAGES_DIR}/include")
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE.txt")
