@@ -168,9 +168,11 @@ __device__ float3 Palette::sampleNormalized(float normalizedCoordinate) {
 
     float3 const first = gPaletteColors[i0];
     float3 const second = gPaletteColors[i1];
-    return {first.x + weight * (second.x - first.x),
-            first.y + weight * (second.y - first.y),
-            first.z + weight * (second.z - first.z)};
+    return {
+        first.x + weight * (second.x - first.x),
+        first.y + weight * (second.y - first.y),
+        first.z + weight * (second.z - first.z)
+    };
 }
 
 #endif
