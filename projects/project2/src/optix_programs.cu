@@ -3,7 +3,9 @@
 #include <math.h>
 #include <optix_device.h>
 
-extern "C" __constant__ LaunchParams params;
+extern "C" {
+__constant__ LaunchParams params;
+}
 
 static constexpr uint32_t kMaxBounces = 16;
 static constexpr float kSkyIllumination = 1.4f;
