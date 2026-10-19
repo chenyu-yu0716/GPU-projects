@@ -303,6 +303,10 @@ void RHI::enableCullFace(bool enable) {
     enable ? glEnable(GL_CULL_FACE) : glDisable(GL_CULL_FACE);
 }
 
+void RHI::enableRasterizerDiscard(bool enable) {
+    enable ? glEnable(GL_RASTERIZER_DISCARD) : glDisable(GL_RASTERIZER_DISCARD);
+}
+
 void RHI::setCullFace(FaceMode mode) {
     glCullFace(toNativeFaceMode(mode));
 }

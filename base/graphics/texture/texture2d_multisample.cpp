@@ -35,7 +35,7 @@ Texture2DMultisample::Texture2DMultisample(Specification const& spec)
 }
 
 void Texture2DMultisample::resize(uint32_t width, uint32_t height) {
-    if (!m_immutable) {
+    if (m_immutable) {
         throw std::runtime_error("Immutable texture cannot be resized");
     }
 

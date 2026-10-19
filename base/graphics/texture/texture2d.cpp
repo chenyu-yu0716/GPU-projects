@@ -110,7 +110,7 @@ void Texture2D::resize(uint32_t width, uint32_t height) {
     glBindTexture(GL_TEXTURE_2D, 0);
 
     m_width = width;
-    height = height;
+    m_height = height;
     m_mipmapLevels = 1;
 }
 

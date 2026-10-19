@@ -136,8 +136,8 @@ public:
 
 private:
     size_t m_size{0};
-    UsageFlags const m_usageFlags{0u};
-    bool const m_immutable{false};
+    UsageFlags m_usageFlags{0u};
+    bool m_immutable{false};
 };
 
 ENABLE_BITMASK_OPERATION(Buffer::StorageFlags);

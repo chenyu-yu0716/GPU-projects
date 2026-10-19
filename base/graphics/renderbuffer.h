@@ -70,6 +70,8 @@ public:
         return m_samples;
     }
 
+    void resize(uint32_t width, uint32_t height);
+
 private:
     Format m_format;
     uint32_t m_width;

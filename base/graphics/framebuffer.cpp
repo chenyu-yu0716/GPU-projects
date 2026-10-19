@@ -142,7 +142,7 @@ void Framebuffer::setColorWrites(std::vector<uint32_t> const& indices) {
         colorAttachments.push_back(GL_COLOR_ATTACHMENT0 + index);
     }
 
-    glNamedFramebufferDrawBuffers(m_handle, 1, colorAttachments.data());
+    glNamedFramebufferDrawBuffers(m_handle, (GLsizei)colorAttachments.size(), colorAttachments.data());
 }
 
 void Framebuffer::disableColorWrite() {
