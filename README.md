@@ -131,3 +131,13 @@ configurable resolution, and 1x1 or 2x2 sampling. The
 `PROJECT1_OFFLINE_ONLY` CMake option builds it without the online OpenGL
 dependencies. See the [project1 README](projects/project1/README.md) for
 usage, command-line options, controls, and offline-build details.
+
+## Project 2: OptiX ray tracer
+
+`projects/project2` renders three Lucy models, a ground sphere, a randomized
+sphere field, and a skybox with OptiX. It provides a progressive OpenGL viewer
+and offline PNG rendering. Offline mode has configurable sample count and
+denoising; the viewer has a denoiser toggle. The `PROJECT2_OFFLINE_ONLY` CMake
+option removes the viewer's OpenGL and GLFW dependencies. Project 2 requires a
+compatible NVIDIA GPU, CUDA, and OptiX 9.1. See the
+[project2 README](projects/project2/README.md) for build and usage details.
