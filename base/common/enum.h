@@ -7,7 +7,8 @@ constexpr uint32_t makeBitmaskBit(uint32_t bit) noexcept {
     return uint32_t{1} << bit;
 }
 
-template <typename Enum> constexpr bool testBitmaskContain(Enum value, Enum flag) noexcept {
+template <typename Enum>
+constexpr bool testBitmaskContain(Enum value, Enum flag) noexcept {
     static_assert(std::is_enum_v<Enum>);
 
     using Underlying = std::underlying_type_t<Enum>;

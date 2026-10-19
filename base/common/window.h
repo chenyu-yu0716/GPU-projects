@@ -61,6 +61,10 @@ public:
         return m_framebufferHeight;
     }
 
+    float aspectRatio() const noexcept {
+        return static_cast<float>(m_framebufferWidth) / static_cast<float>(m_framebufferHeight);
+    }
+
     bool isVSync() const noexcept {
         return m_vsync;
     }
