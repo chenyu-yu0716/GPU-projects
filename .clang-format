@@ -24,10 +24,20 @@ IndentCaseLabels: false
 AccessModifierOffset: -4
 
 # ------------------------------------------------------------
+# Line endings
+# ------------------------------------------------------------
+
+# Use LF consistently in Windows and Linux workspaces.
+LineEnding: LF
+
+# ------------------------------------------------------------
 # Line width
 # ------------------------------------------------------------
 
 ColumnLimit: 120
+
+# Put each template declaration on its own line.
+BreakTemplateDeclarations: Yes
 
 # ------------------------------------------------------------
 # Constructor initializer lists
@@ -86,6 +96,20 @@ AllowShortLoopsOnASingleLine: false
 #
 # Foo::~Foo() {}
 AllowShortFunctionsOnASingleLine: Empty
+
+# ------------------------------------------------------------
+# Braced initializer lists
+# ------------------------------------------------------------
+
+# When a braced initializer list exceeds the column limit, break after the
+# opening brace and put the closing brace on its own line:
+#
+# Options options{
+#     .first = first,
+#     .second = second
+# };
+BreakAfterOpenBracketBracedList: true
+BreakBeforeCloseBracketBracedList: true
 
 # ------------------------------------------------------------
 # Pointer / reference alignment
