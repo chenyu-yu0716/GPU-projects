@@ -126,6 +126,9 @@ public:
 
     static void setFrontFaceOrientation(bool clockwise);
 
+    // rasterization
+    static void enableRasterizerDiscard(bool enable);
+
     // blend
     static void enableBlend(bool enable);
 

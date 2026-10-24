@@ -2,11 +2,12 @@
 
 #include <iostream>
 #include <source_location>
-#include <string>
+#include <format>
 
 #include <glad/glad.h>
 
 namespace gfx {
+
 inline GLenum checkGLErrors(std::source_location location = std::source_location::current()) {
     GLenum errorCode;
     while ((errorCode = glGetError()) != GL_NO_ERROR) {
@@ -40,9 +41,10 @@ inline GLenum checkGLErrors(std::source_location location = std::source_location
             break;
         }
 
-        std::cerr << "OpenGL error: " << error << " | " << location.file_name() << ':' << location.line() << '\n';
+        std::cerr << std::format("OpenGL error: {} | {}:{}\n", error, location.file_name(), location.line());
     }
 
     return errorCode;
 }
+
 } // namespace gfx

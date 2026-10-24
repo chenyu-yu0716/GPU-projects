@@ -24,17 +24,6 @@ public:
 
     static void unbind();
 
-    // Non-DSA API
-    static void enableVertexAttribArray(uint32_t location);
-
-    static void disableVertexAttribArray(uint32_t location);
-
-    static void vertexAttribPointer(
-        uint32_t location, size_t size, DataType type, bool normalized, size_t stride, void const* pointer = nullptr);
-
-    static void vertexAttribDivisor(uint32_t location, uint32_t divisor);
-
-    // DSA API
     void attachVertexBuffer(Buffer const& buffer, uint32_t index, intptr_t offset, size_t stride);
 
     void attachIndexBuffer(Buffer const& buffer);

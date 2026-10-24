@@ -131,3 +131,13 @@ configurable resolution, and 1x1 or 2x2 sampling. The
 `PROJECT1_OFFLINE_ONLY` CMake option builds it without the online OpenGL
 dependencies. See the [project1 README](projects/project1/README.md) for
 usage, command-line options, controls, and offline-build details.
+
+## Project 2: OptiX ray tracer
+
+`projects/project2` is an OptiX ray tracer starter for a scene with Lucy models,
+spheres, and a skybox. Students complete the marked TODOs to render the scene;
+the starter writes a blank image. It supports an OpenGL viewer and offline PNG
+mode. The `PROJECT2_OFFLINE_ONLY` CMake option removes the viewer's OpenGL and
+GLFW dependencies. Project 2 requires a compatible NVIDIA GPU, CUDA, and OptiX
+9.1. See the [project2 README](projects/project2/README.md) for build and usage
+details and [ASSIGNMENT.md](projects/project2/ASSIGNMENT.md) for the tasks.

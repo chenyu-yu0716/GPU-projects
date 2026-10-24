@@ -71,7 +71,7 @@ void renderMandelbrotSetOffline(OfflineRenderConfig const& config) {
     std::cout << std::format("Offline render completed in {} seconds\n", timer.getTotalTime());
 
     std::vector<float4> renderedPixels(pixelCount);
-    CHECK_CUDA(cudaMemcpy(renderedPixels.data(), output.data(), output.bytes(), cudaMemcpyDeviceToHost));
+    CHECK_CUDA(cudaMemcpy(renderedPixels.data(), output.data(), output.sizeBytes(), cudaMemcpyDeviceToHost));
 
     std::vector<unsigned char> rgba(pixelCount * 4);
     for (size_t index = 0; index < pixelCount; ++index) {

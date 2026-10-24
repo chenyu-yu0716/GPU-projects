@@ -70,28 +70,6 @@ void VertexArray::attachIndexBuffer(Buffer const& buffer) {
     glVertexArrayElementBuffer(m_handle, buffer.getNativeHandle());
 }
 
-void VertexArray::enableVertexAttribArray(uint32_t location) {
-    glEnableVertexAttribArray(location);
-}
-
-void VertexArray::disableVertexAttribArray(uint32_t location) {
-    glDisableVertexAttribArray(location);
-}
-
-void VertexArray::vertexAttribPointer(
-    uint32_t location, size_t size, DataType type, bool normalized, size_t stride, void const* pointer) {
-    glVertexAttribPointer(static_cast<GLuint>(location),
-                          static_cast<GLint>(size),
-                          toNativeDataType(type),
-                          static_cast<GLboolean>(normalized),
-                          static_cast<GLsizei>(stride),
-                          pointer);
-}
-
-void VertexArray::vertexAttribDivisor(uint32_t location, uint32_t divisor) {
-    glVertexAttribDivisor(location, divisor);
-}
-
 void VertexArray::enableAttrib(uint32_t location) {
     glEnableVertexArrayAttrib(m_handle, location);
 }

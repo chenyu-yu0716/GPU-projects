@@ -1,6 +1,8 @@
 #include "graphics/gl_program.h"
 
+#include <format>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <string_view>
@@ -8,9 +10,8 @@
 #include "graphics/gl_utility.h"
 
 namespace gfx {
-namespace {
 
-std::string_view getVarTypeName(GLProgram::VarType type) noexcept {
+static std::string_view getVarTypeName(GLProgram::VarType type) noexcept {
     switch (type) {
     case GLProgram::VarType::Unknown:
         return "Unknown";
@@ -247,8 +248,6 @@ std::string_view getVarTypeName(GLProgram::VarType type) noexcept {
     return "Unknown";
 }
 
-} // namespace
-
 static GLProgram::VarType getVarType(GLint type) {
     switch (type) {
     default:
@@ -475,7 +474,7 @@ static GLProgram::VarType getVarType(GLint type) {
         return GLProgram::VarType::AtomicCounter;
     }
 
-    std::cerr << "Unknown shader variable type: 0x" << std::hex << type << std::dec << '\n';
+    std::cerr << std::format("Unknown shader variable type: {:#x}\n", static_cast<unsigned int>(type));
 
     return GLProgram::VarType::Unknown;
 }
@@ -510,7 +509,9 @@ GLProgram::GLProgram(std::vector<ShaderModule> const& shaderModules,
                      std::map<ShaderModule::Stage, UniformBufferInfoMap> const& uniformBufferStageInfos,
                      std::map<ShaderModule::Stage, StorageBufferInfoMap> const& storageBufferStageInfos,
                      std::map<ShaderModule::Stage, StorageImageInfoMap> const& storageImageStageInfos,
-                     std::map<ShaderModule::Stage, AtomicCounterInfoMap> const& atomicCounterStageInfos) {
+                     std::map<ShaderModule::Stage, AtomicCounterInfoMap> const& atomicCounterStageInfos,
+                     TransformFeedbackBufferInfoMap const& transformFeedbackBufferInfos)
+    : m_transformFeedbackBufferInfos{transformFeedbackBufferInfos} {
     // create program and attach/link shader modules
     m_handle = glCreateProgram();
     checkGLErrors();
@@ -577,6 +578,8 @@ GLProgram::GLProgram(std::vector<ShaderModule> const& shaderModules,
             }
         }
     }
+
+    queryTransformFeedbackInfo();
 }
 
 GLProgram::~GLProgram() {
@@ -597,6 +600,7 @@ GLProgram& GLProgram::operator=(GLProgram&& rhs) noexcept {
         m_storageBufferInfos = std::move(rhs.m_storageBufferInfos);
         m_storageImageInfos = std::move(rhs.m_storageImageInfos);
         m_atomicCounterInfos = std::move(rhs.m_atomicCounterInfos);
+        m_transformFeedbackBufferInfos = std::move(rhs.m_transformFeedbackBufferInfos);
 
         RHIResource::operator=(std::move(rhs));
     }
@@ -793,6 +797,7 @@ void GLProgram::printResourceInfos() const {
     printStorageBufferInfos();
     printStorageImageInfos();
     printAtomicCounterInfos();
+    printTransformFeedbackInfo();
 }
 
 void GLProgram::attach(ShaderModule const& shaderModule) {
@@ -825,6 +830,90 @@ void GLProgram::queryResourceMetaInfos() {
     queryUniformBlocks();
     queryShaderStorageBuffers();
     queryAtomicCounters();
+    queryTransformFeedbackInfo();
+}
+
+void GLProgram::queryTransformFeedbackInfo() {
+    GLint bufferCount{};
+    glGetProgramInterfaceiv(m_handle, GL_TRANSFORM_FEEDBACK_BUFFER, GL_ACTIVE_RESOURCES, &bufferCount);
+
+    GLenum const bufferProperties[]{GL_BUFFER_BINDING, GL_TRANSFORM_FEEDBACK_BUFFER_STRIDE};
+    constexpr GLsizei bufferPropertyCount{static_cast<GLsizei>(std::size(bufferProperties))};
+    for (GLint i = 0; i < bufferCount; ++i) {
+        GLint results[bufferPropertyCount]{};
+        glGetProgramResourceiv(m_handle,
+                               GL_TRANSFORM_FEEDBACK_BUFFER,
+                               static_cast<GLuint>(i),
+                               bufferPropertyCount,
+                               bufferProperties,
+                               bufferPropertyCount,
+                               nullptr,
+                               results);
+
+        GLint const bufferBinding{results[0]};
+        GLint const stride{results[1]};
+        if (bufferBinding < 0 || stride < 0) {
+            continue;
+        }
+        m_transformFeedbackBufferInfos.try_emplace(bufferBinding,
+                                                   TransformFeedbackBufferInfo{
+                                                       .stride = stride,
+                                                   });
+    }
+
+    GLint varyingCount{};
+    glGetProgramInterfaceiv(m_handle, GL_TRANSFORM_FEEDBACK_VARYING, GL_ACTIVE_RESOURCES, &varyingCount);
+
+    GLenum const varyingProperties[]{
+        GL_NAME_LENGTH,
+        GL_TYPE,
+        GL_ARRAY_SIZE,
+        GL_OFFSET,
+        GL_TRANSFORM_FEEDBACK_BUFFER_INDEX,
+    };
+    constexpr GLsizei varyingPropertyCount{static_cast<GLsizei>(std::size(varyingProperties))};
+    for (GLint i = 0; i < varyingCount; ++i) {
+        GLint results[varyingPropertyCount]{};
+        glGetProgramResourceiv(m_handle,
+                               GL_TRANSFORM_FEEDBACK_VARYING,
+                               static_cast<GLuint>(i),
+                               varyingPropertyCount,
+                               varyingProperties,
+                               varyingPropertyCount,
+                               nullptr,
+                               results);
+
+        GLint const nameLength{results[0]};
+        GLint const arraySize{results[2]};
+        GLint const offset{results[3]};
+        GLint const bufferBinding{results[4]};
+        if (nameLength <= 0 || arraySize < 0 || offset < 0 || bufferBinding < 0) {
+            continue;
+        }
+
+        std::vector<GLchar> nameBuffer(static_cast<std::string::size_type>(nameLength));
+        GLsizei writtenNameLength{};
+        glGetProgramResourceName(m_handle,
+                                 GL_TRANSFORM_FEEDBACK_VARYING,
+                                 static_cast<GLuint>(i),
+                                 nameLength,
+                                 &writtenNameLength,
+                                 nameBuffer.data());
+        std::string name(nameBuffer.data(), static_cast<std::string::size_type>(writtenNameLength));
+
+        VarType const type{results[1] == GL_NONE ? VarType::Unknown : getVarType(results[1])};
+        auto const bufferIt{m_transformFeedbackBufferInfos.find(bufferBinding)};
+        if (bufferIt == m_transformFeedbackBufferInfos.end()) {
+            continue;
+        }
+
+        bufferIt->second.varyings.try_emplace(std::move(name),
+                                              TransformFeedbackVaryingInfo{
+                                                  .type = type,
+                                                  .arraySize = static_cast<uint32_t>(arraySize),
+                                                  .offset = offset,
+                                              });
+    }
 }
 
 void GLProgram::queryGenericUniforms() {
@@ -988,53 +1077,67 @@ void GLProgram::queryAtomicCounters() {
 void GLProgram::printUniformVarInfos() const {
     std::cout << "+ Uniform Var Infos\n";
     for (auto const& [name, varInfo] : m_uniformVarInfos) {
-        std::cout << "  + " << name << "\n";
-        std::cout << "    + location: " << varInfo.location << "\n";
-        std::cout << "    + type:     " << getVarTypeName(varInfo.type) << "\n";
+        std::cout << std::format("  + {}\n", name);
+        std::cout << std::format("    + location: {}\n", varInfo.location);
+        std::cout << std::format("    + type:     {}\n", getVarTypeName(varInfo.type));
     }
 }
 
 void GLProgram::printTextureInfos() const {
     std::cout << "+ Texture Infos\n";
     for (auto const& [name, texInfo] : m_textureInfos) {
-        std::cout << "  + " << name << "\n";
-        std::cout << "    + binding: " << texInfo.binding << "\n";
-        std::cout << "    + type:    " << getVarTypeName(texInfo.type) << "\n";
+        std::cout << std::format("  + {}\n", name);
+        std::cout << std::format("    + binding: {}\n", texInfo.binding);
+        std::cout << std::format("    + type:    {}\n", getVarTypeName(texInfo.type));
     }
 }
 
 void GLProgram::printUniformBlockInfos() const {
     std::cout << "+ Uniform Block Infos\n";
     for (auto const& [name, uboInfo] : m_uniformBufferInfos) {
-        std::cout << "  + " << name << "\n";
-        std::cout << "    + binding: " << uboInfo.binding << "\n";
-        std::cout << "    + size:    " << uboInfo.size << "\n";
+        std::cout << std::format("  + {}\n", name);
+        std::cout << std::format("    + binding: {}\n", uboInfo.binding);
+        std::cout << std::format("    + size:    {}\n", uboInfo.size);
     }
 }
 
 void GLProgram::printStorageBufferInfos() const {
     std::cout << "+ Storage Buffer Infos\n";
     for (auto const& [name, ssboInfo] : m_storageBufferInfos) {
-        std::cout << "  + " << name << "\n";
-        std::cout << "    + binding: " << ssboInfo.binding << "\n";
+        std::cout << std::format("  + {}\n", name);
+        std::cout << std::format("    + binding: {}\n", ssboInfo.binding);
     }
 }
 
 void GLProgram::printStorageImageInfos() const {
     std::cout << "+ Storage Image Infos\n";
     for (auto const& [name, imageInfo] : m_storageImageInfos) {
-        std::cout << "  + " << name << "\n";
-        std::cout << "    + binding: " << imageInfo.binding << "\n";
-        std::cout << "    + type:    " << getVarTypeName(imageInfo.type) << "\n";
+        std::cout << std::format("  + {}\n", name);
+        std::cout << std::format("    + binding: {}\n", imageInfo.binding);
+        std::cout << std::format("    + type:    {}\n", getVarTypeName(imageInfo.type));
     }
 }
 
 void GLProgram::printAtomicCounterInfos() const {
     std::cout << "+ Atomic Counter Infos\n";
     for (auto const& [name, atomicInfo] : m_atomicCounterInfos) {
-        std::cout << "  + " << name << "\n";
-        std::cout << "    + binding: " << atomicInfo.binding << "\n";
-        std::cout << "    + offset:  " << atomicInfo.offset << "\n";
+        std::cout << std::format("  + {}\n", name);
+        std::cout << std::format("    + binding: {}\n", atomicInfo.binding);
+        std::cout << std::format("    + offset:  {}\n", atomicInfo.offset);
+    }
+}
+
+void GLProgram::printTransformFeedbackInfo() const {
+    std::cout << "+ Transform Feedback Infos\n";
+    for (auto const& [binding, bufferInfo] : m_transformFeedbackBufferInfos) {
+        std::cout << std::format("  + buffer binding {}\n", binding);
+        std::cout << std::format("    + stride: {}\n", bufferInfo.stride);
+        for (auto const& [name, varyingInfo] : bufferInfo.varyings) {
+            std::cout << std::format("    + {}\n", name);
+            std::cout << std::format("      + type:       {}\n", getVarTypeName(varyingInfo.type));
+            std::cout << std::format("      + array size: {}\n", varyingInfo.arraySize);
+            std::cout << std::format("      + offset:     {}\n", varyingInfo.offset);
+        }
     }
 }
 

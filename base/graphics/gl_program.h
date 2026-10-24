@@ -166,6 +166,19 @@ public:
         int offset;
     };
 
+    struct TransformFeedbackVaryingInfo {
+        VarType type;
+        uint32_t arraySize; // GL_ARRAY_SIZE; one for non-array variables
+        int offset;         // Byte offset within one captured vertex
+    };
+
+    using TransformFeedbackVaryingInfoMap = std::map<std::string, TransformFeedbackVaryingInfo, std::less<>>;
+
+    struct TransformFeedbackBufferInfo {
+        int stride; // Bytes between consecutive captured vertices
+        TransformFeedbackVaryingInfoMap varyings;
+    };
+
     using UniformVarInfoMap = std::map<std::string, UniformVarInfo, std::less<>>;
 
     using TextureInfoMap = std::map<std::string, TextureInfo, std::less<>>;
@@ -178,6 +191,8 @@ public:
 
     using AtomicCounterInfoMap = std::map<std::string, AtomicCounterInfo, std::less<>>;
 
+    using TransformFeedbackBufferInfoMap = std::map<int, TransformFeedbackBufferInfo>;
+
 public:
     GLProgram(std::vector<ShaderModule> const& shaderModules);
 
@@ -187,7 +202,8 @@ public:
               std::map<ShaderModule::Stage, UniformBufferInfoMap> const& uniformBufferInfos,
               std::map<ShaderModule::Stage, StorageBufferInfoMap> const& storageBufferInfos,
               std::map<ShaderModule::Stage, StorageImageInfoMap> const& storageImageInfos,
-              std::map<ShaderModule::Stage, AtomicCounterInfoMap> const& atomicCounterInfos);
+              std::map<ShaderModule::Stage, AtomicCounterInfoMap> const& atomicCounterInfos,
+              TransformFeedbackBufferInfoMap const& transformFeedbackBufferInfos = {});
 
     GLProgram(GLProgram&& rhs) noexcept = default;
 
@@ -281,7 +297,8 @@ public:
 
     // This API is not recommended to use,
     // because it will query the uniform variable location every time, which is inefficient.
-    template <typename T> void setUniform(std::string_view name, T const& value) const {
+    template <typename T>
+    void setUniform(std::string_view name, T const& value) const {
         int location = getUniformVarLocation(name);
         if (location != -1) {
             setUniform(location, value);
@@ -314,6 +331,10 @@ public:
         return m_atomicCounterInfos;
     }
 
+    auto const& getTransformFeedbackBufferInfos() const noexcept {
+        return m_transformFeedbackBufferInfos;
+    }
+
 private:
     UniformVarInfoMap m_uniformVarInfos;
 
@@ -326,6 +347,8 @@ private:
     StorageImageInfoMap m_storageImageInfos;
 
     AtomicCounterInfoMap m_atomicCounterInfos;
+
+    TransformFeedbackBufferInfoMap m_transformFeedbackBufferInfos;
 
 private:
     void attach(ShaderModule const& shaderModule);
@@ -344,6 +367,8 @@ private:
 
     void queryAtomicCounters();
 
+    void queryTransformFeedbackInfo();
+
     void printUniformVarInfos() const;
 
     void printTextureInfos() const;
@@ -355,6 +380,8 @@ private:
     void printStorageImageInfos() const;
 
     void printAtomicCounterInfos() const;
+
+    void printTransformFeedbackInfo() const;
 
     static bool isTexture(VarType type) noexcept;
 

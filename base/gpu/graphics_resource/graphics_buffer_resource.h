@@ -27,7 +27,7 @@ public:
     void* getMappedPointer(size_t* size = nullptr) const {
         void* pointer{nullptr};
         size_t mappedSize{0};
-        CHECK_CUDA(cudaGraphicsResourceGetMappedPointer(&pointer, &mappedSize, getResource()));
+        LOG_CUDA(cudaGraphicsResourceGetMappedPointer(&pointer, &mappedSize, getResource()));
 
         if (size != nullptr) {
             *size = mappedSize;
@@ -36,7 +36,8 @@ public:
         return pointer;
     }
 
-    template <typename T> T* getMappedPointer(size_t* count = nullptr) const {
+    template <typename T>
+    T* getMappedPointer(size_t* count = nullptr) const {
         size_t size{0};
         auto* pointer = static_cast<T*>(getMappedPointer(&size));
 

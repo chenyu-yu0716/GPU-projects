@@ -1,0 +1,11 @@
+# Apply repository settings without inheriting those from parent directories.
+root = true
+
+# Use LF when editing files in both Visual Studio and Linux editors.
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+# Keep Windows command scripts consistent with .gitattributes.
+[*.{bat,cmd}]
+end_of_line = crlf

@@ -19,8 +19,10 @@ public:
     struct Config {
         Application::Config applicationConfig;
         bool antialias{false};
-        HighPrecisionComplex center{HighPrecisionFloat{"-1.416707803560595223063379502205564140068277553325999761"},
-                                    HighPrecisionFloat{"0.000000000000000000000001192699352575212153707731000000"}};
+        HighPrecisionComplex center{
+            HighPrecisionFloat{"-1.416707803560595223063379502205564140068277553325999761"},
+            HighPrecisionFloat{"0.000000000000000000000001192699352575212153707731000000"}
+        };
         HighPrecisionFloat zoom{"1.6E22"};
     };
 
@@ -44,8 +46,9 @@ private:
     std::unique_ptr<gfx::VertexArray> m_screenVertexArray;
 
     PlaybackController m_playback;
-    HighPrecisionComplex m_startCenter{HighPrecisionFloat{"-1.4184000000000000000000000000000000000000"},
-                                       HighPrecisionFloat{0}};
+    HighPrecisionComplex m_startCenter{
+        HighPrecisionFloat{"-1.4184000000000000000000000000000000000000"}, HighPrecisionFloat{0}
+    };
     HighPrecisionFloat m_startZoom{1035};
 
 private:

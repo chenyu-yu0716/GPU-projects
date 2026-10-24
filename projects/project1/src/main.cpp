@@ -18,8 +18,10 @@ struct CommandLineOptions {
     int width{640};
     int height{360};
     bool antialias{false};
-    HighPrecisionComplex center{HighPrecisionFloat{"-1.416707803560595223063379502205564140068277553325999761"},
-                                HighPrecisionFloat{"0.000000000000000000000001192699352575212153707731000000"}};
+    HighPrecisionComplex center{
+        HighPrecisionFloat{"-1.416707803560595223063379502205564140068277553325999761"},
+        HighPrecisionFloat{"0.000000000000000000000001192699352575212153707731000000"}
+    };
     HighPrecisionFloat zoom{"1.6E22"};
     std::filesystem::path outputPath;
 };

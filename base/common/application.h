@@ -37,6 +37,10 @@ protected:
 
     void resetClock() noexcept;
 
+    std::filesystem::path getAssetPath(std::filesystem::path const& relativePath) const {
+        return m_assetRootDir / relativePath;
+    }
+
     virtual void handleEvent(Event& event) = 0;
 
     virtual void renderFrame() = 0;
@@ -45,6 +49,9 @@ private:
     /* application states */
     bool m_running{true};
     bool m_minimized{false};
+
+    /* asset root directory */
+    std::filesystem::path m_assetRootDir;
 
     /* delta time */
     Timer m_clock;

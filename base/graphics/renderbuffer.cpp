@@ -152,4 +152,17 @@ Renderbuffer& Renderbuffer::operator=(Renderbuffer&& rhs) noexcept {
 
     return *this;
 }
+
+void Renderbuffer::resize(uint32_t width, uint32_t height) {
+    auto const format = toNativeFormat(m_format);
+    if (m_samples > 1) {
+        glNamedRenderbufferStorageMultisample(m_handle, GLsizei(m_samples), format, GLsizei(width), GLsizei(height));
+    }
+    else {
+        glNamedRenderbufferStorage(m_handle, format, GLsizei(width), GLsizei(height));
+    }
+
+    m_width = width;
+    m_height = height;
+}
 } // namespace gfx
