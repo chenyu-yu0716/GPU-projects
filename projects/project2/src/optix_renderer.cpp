@@ -6,6 +6,7 @@
 #include <optix/program_group.h>
 #include <optix_renderer.h>
 #include <optix_stack_size.h>
+#include <span>
 #include <stdexcept>
 #include <string>
 
@@ -121,26 +122,140 @@ void OptixRenderer::resize(uint32_t width, uint32_t height) {
         return;
     }
 
-    // TODO: Resize the per-pixel rendering resources.
+    size_t const pixelCount = static_cast<size_t>(width) * height;
+    m_accumulation.reallocate(pixelCount);
+    m_albedo.reallocate(pixelCount);
+    m_normal.reallocate(pixelCount);
+
+    m_surfacePositions.reallocate(pixelCount);
+    m_previousSurfacePositions.reallocate(pixelCount);
+    m_flow.reallocate(pixelCount);
+    m_flowTrustworthiness.reallocate(pixelCount);
+    m_previousOutput.reallocate(pixelCount);
+
+    m_denoiser.setup(width, height);
+    size_t const internalGuideLayerBytes = pixelCount * m_denoiser.sizes().internalGuideLayerPixelSizeInBytes;
+    m_previousInternalGuideLayer.reallocate(internalGuideLayerBytes);
+    m_internalGuideLayer.reallocate(internalGuideLayerBytes);
+
     m_width = width;
     m_height = height;
+    resetTemporalHistory();
+}
+
+// Describe a dense device image in the layout expected by the denoiser.
+template <typename T>
+static OptixImage2D denoiserImage(
+    T const* data, uint32_t width, uint32_t height, OptixPixelFormat format, size_t pixelStrideInBytes = sizeof(T)) {
+    return OptixImage2D{
+        .data = optix::address(data),
+        .width = width,
+        .height = height,
+        .rowStrideInBytes = static_cast<unsigned int>(width * pixelStrideInBytes),
+        .pixelStrideInBytes = static_cast<unsigned int>(pixelStrideInBytes),
+        .format = format,
+    };
+}
+
+void OptixRenderer::denoiseAccumulation(float4* pixels) {
+    OptixImage2D const color = denoiserImage(m_accumulation.data(), m_width, m_height, OPTIX_PIXEL_FORMAT_FLOAT4);
+
+    // The raw average stays in m_accumulation; only the output pixels receive the denoised image.
+    // Without history, the first frame of a sequence uses its own input as the previous output.
+    OptixDenoiserLayer const layer{
+        .input = color,
+        .previousOutput = m_hasTemporalHistory
+                              ? denoiserImage(m_previousOutput.data(), m_width, m_height, OPTIX_PIXEL_FORMAT_FLOAT4)
+                              : color,
+        .output = denoiserImage(pixels, m_width, m_height, OPTIX_PIXEL_FORMAT_FLOAT4),
+        .type = OPTIX_DENOISER_AOV_TYPE_BEAUTY,
+    };
+
+    size_t const internalGuidePixelBytes = m_denoiser.sizes().internalGuideLayerPixelSizeInBytes;
+    OptixDenoiserGuideLayer const guide{
+        .albedo = denoiserImage(m_albedo.data(), m_width, m_height, OPTIX_PIXEL_FORMAT_FLOAT4),
+        .normal = denoiserImage(m_normal.data(), m_width, m_height, OPTIX_PIXEL_FORMAT_FLOAT3),
+        .flow = denoiserImage(m_flow.data(), m_width, m_height, OPTIX_PIXEL_FORMAT_FLOAT2),
+        .previousOutputInternalGuideLayer = denoiserImage(m_previousInternalGuideLayer.data(),
+                                                          m_width,
+                                                          m_height,
+                                                          OPTIX_PIXEL_FORMAT_INTERNAL_GUIDE_LAYER,
+                                                          internalGuidePixelBytes),
+        .outputInternalGuideLayer = denoiserImage(m_internalGuideLayer.data(),
+                                                  m_width,
+                                                  m_height,
+                                                  OPTIX_PIXEL_FORMAT_INTERNAL_GUIDE_LAYER,
+                                                  internalGuidePixelBytes),
+        .flowTrustworthiness =
+            denoiserImage(m_flowTrustworthiness.data(), m_width, m_height, OPTIX_PIXEL_FORMAT_FLOAT1),
+    };
+
+    OptixDenoiserParams const params{.temporalModeUsePreviousLayers = m_hasTemporalHistory ? 1u : 0u};
+    m_denoiser.invoke(params, guide, std::span(&layer, 1));
+
+    // Keep this frame's output and internal guide as history for the next frame.
+    CHECK_CUDA(cudaMemcpy(m_previousOutput.data(), pixels, m_previousOutput.sizeBytes(), cudaMemcpyDeviceToDevice));
+    m_previousInternalGuideLayer.swap(m_internalGuideLayer);
+    m_hasTemporalHistory = true;
 }
 
 void OptixRenderer::resetTemporalHistory() {
-    // TODO (bonus): Reset the temporal denoiser history.
+    // The next denoised frame starts a new sequence; stale buffers are then ignored.
+    m_hasTemporalHistory = false;
 }
 
 void OptixRenderer::render(
     float4* pixels, uint32_t firstSampleIndex, Camera const& camera, bool denoise, uint32_t samplesPerFrame) {
-    (void)firstSampleIndex;
-    (void)camera;
-    (void)denoise;
-    (void)samplesPerFrame;
+    // Motion data is only written while denoising, so a raw frame breaks the sequence.
+    if (!denoise) {
+        resetTemporalHistory();
+    }
 
-    // TODO: Launch OptiX for the requested samples and write the rendered image.
-    // Until the TODO is complete, keep the output initialized for online and
-    // offline mode.
-    CHECK_CUDA(cudaMemset(pixels, 0, static_cast<size_t>(m_width) * m_height * sizeof(float4)));
+    glm::vec3 const position = camera.position();
+    glm::vec3 const front = camera.getFront();
+    glm::vec3 const right = camera.getRight();
+    glm::vec3 const up = camera.getUp();
+    LaunchParams launchParams{
+        .pixels = pixels,
+        .accumulation = m_accumulation.data(),
+        .albedo = m_albedo.data(),
+        .normal = m_normal.data(),
+        .surfacePositions = m_surfacePositions.data(),
+        .previousSurfacePositions = m_previousSurfacePositions.data(),
+        .flow = m_flow.data(),
+        .flowTrustworthiness = m_flowTrustworthiness.data(),
+        .scene = m_scene.traversable(),
+        .sky = m_scene.skyboxTexture(),
+        .cameraPosition{position.x, position.y, position.z},
+        .front{front.x, front.y, front.z},
+        .right{right.x, right.y, right.z},
+        .up{up.x, up.y, up.z},
+        .previousCameraPosition = m_previousCameraPosition,
+        .previousFront = m_previousFront,
+        .previousRight = m_previousRight,
+        .previousUp = m_previousUp,
+        .width = m_width,
+        .height = m_height,
+        .writeGuides = denoise ? 1u : 0u,
+        .computeFlow = denoise && m_hasTemporalHistory ? 1u : 0u,
+    };
 
-    // TODO (bonus): Denoise the accumulated image when requested.
+    for (uint32_t sampleOffset = 0; sampleOffset < samplesPerFrame; ++sampleOffset) {
+        launchParams.sample = firstSampleIndex + sampleOffset;
+        launchParams.frameIndex = m_frameIndex++;
+        m_launchParams.copyFromHost(&launchParams);
+        m_pipeline.launch(
+            m_sbt, optix::address(m_launchParams.data()), sizeof(LaunchParams), nullptr, m_width, m_height);
+    }
+
+    if (denoise) {
+        denoiseAccumulation(pixels);
+
+        // This frame's surfaces and camera become the reference for the next frame's flow.
+        m_previousSurfacePositions.swap(m_surfacePositions);
+        m_previousCameraPosition = launchParams.cameraPosition;
+        m_previousFront = launchParams.front;
+        m_previousRight = launchParams.right;
+        m_previousUp = launchParams.up;
+    }
 }

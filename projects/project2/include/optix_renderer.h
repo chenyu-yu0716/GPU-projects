@@ -49,8 +49,30 @@ private:
     gpu::Buffer<LaunchParams> m_launchParams;
     gpu::Buffer<float4> m_accumulation;
 
+    // Denoiser guides, progressively averaged like the radiance.
+    gpu::Buffer<float4> m_albedo;
+    gpu::Buffer<float3> m_normal;
+
+    // Temporal denoiser motion data and history, swapped after every denoised frame.
+    gpu::Buffer<float4> m_surfacePositions;
+    gpu::Buffer<float4> m_previousSurfacePositions;
+    gpu::Buffer<float2> m_flow;
+    gpu::Buffer<float> m_flowTrustworthiness;
+    gpu::Buffer<float4> m_previousOutput;
+    gpu::Buffer<std::byte> m_previousInternalGuideLayer;
+    gpu::Buffer<std::byte> m_internalGuideLayer;
+    bool m_hasTemporalHistory{};
+
+    // Camera basis of the previous denoised frame, used to compute flow.
+    float3 m_previousCameraPosition{};
+    float3 m_previousFront{};
+    float3 m_previousRight{};
+    float3 m_previousUp{};
+
 private:
     void createPipelineAndShaderBindingTable(std::filesystem::path const& modulePath);
+
+    void denoiseAccumulation(float4* pixels);
 
     void resetTemporalHistory();
 };

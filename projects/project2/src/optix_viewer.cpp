@@ -113,6 +113,10 @@ void OptixViewer::handleEvent(Event& event) {
         }
         else if (key.getKeyCode() == KeyCode::Space && !key.isRepeated()) {
             m_denoiserEnabled = !m_denoiserEnabled;
+            if (m_denoiserEnabled) {
+                // Guides are only written while denoising, so restart them with the radiance.
+                m_samples = 0;
+            }
             updateWindowTitle();
         }
         return false;
