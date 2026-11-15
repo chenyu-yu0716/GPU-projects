@@ -144,7 +144,7 @@ static void renderVideo(CommandLineOptions const& options) {
             compute.render(output.data(), options.width, options.height, timeSeconds, options.antialias, palette);
 
         // The copy waits for the asynchronous kernel launched by render().
-        CHECK_CUDA(cudaMemcpy(renderedPixels.data(), output.data(), output.bytes(), cudaMemcpyDeviceToHost));
+        CHECK_CUDA(cudaMemcpy(renderedPixels.data(), output.data(), output.sizeBytes(), cudaMemcpyDeviceToHost));
 
         for (size_t index = 0; index < pixelCount; ++index) {
             float4 const pixel = renderedPixels[index];
