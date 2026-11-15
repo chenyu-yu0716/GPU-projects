@@ -9,6 +9,8 @@
 
 #include <cuda_gl_interop.h>
 
+#include <format>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -74,12 +76,21 @@ OptixViewer::OptixViewer(Application::Config const& config)
     selectCudaDeviceForOpenGL();
     CHECK_OPTIX(optixInit());
     m_context = std::make_unique<optix::DeviceContext>();
+    uint32_t const rtCoreVersion = m_context->getRtCoreVersion();
+    if (rtCoreVersion == 0) {
+        std::cout << "RT Core version: Not supported\n";
+    }
+    else {
+        std::cout << std::format("RT Core version: {}.{}\n", rtCoreVersion / 10, rtCoreVersion % 10);
+    }
+
     m_scene = std::make_unique<Scene>(*m_context, config.assetRootDir);
-    m_renderer = std::make_unique<OptixRenderer>(*m_context,
-                                                 *m_scene,
-                                                 config.assetRootDir / "optix/project2.optixir",
-                                                 m_window.framebufferWidth(),
-                                                 m_window.framebufferHeight());
+    m_renderer = std::make_unique<OptixRenderer>(
+        *m_context,
+        *m_scene,
+        config.assetRootDir / "optix/project2.optixir",
+        m_window.framebufferWidth(),
+        m_window.framebufferHeight());
 
     resizeOutput(m_window.framebufferWidth(), m_window.framebufferHeight());
 

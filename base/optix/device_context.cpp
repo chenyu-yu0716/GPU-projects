@@ -1,26 +1,21 @@
 #include <optix/device_context.h>
 #include <optix_function_table_definition.h>
 
-#include <iostream>
+#include <cstdio>
 #include <utility>
 
 namespace optix {
 
-namespace {
-void logCallback(uint32_t level, char const* tag, char const* message, void*) noexcept {
-    try {
-        std::cerr << "[OptiX][" << level << "][" << (tag ? tag : "") << "] " << (message ? message : "") << '\n';
-    }
-    catch (...) {
-        // Exceptions must not cross the OptiX C callback boundary.
-    }
-}
-} // namespace
-
 DeviceContext::DeviceContext(OptixDeviceContextOptions const* options) {
     // A null CUDA context binds OptiX to the CUDA context active on this thread.
     CHECK_OPTIX(optixDeviceContextCreate(nullptr, options, &m_handle));
-    OptixResult const result = optixDeviceContextSetLogCallback(m_handle, logCallback, nullptr, 4);
+    OptixResult const result = optixDeviceContextSetLogCallback(
+        m_handle,
+        [](uint32_t level, char const* tag, char const* message, void*) noexcept {
+            std::fprintf(stderr, "[OptiX][%u][%s] %s\n", level, tag ? tag : "", message ? message : "");
+        },
+        nullptr,
+        4);
     if (result != OPTIX_SUCCESS) {
         LOG_OPTIX(optixDeviceContextDestroy(m_handle));
         m_handle = nullptr;
@@ -47,6 +42,13 @@ DeviceContext& DeviceContext::operator=(DeviceContext&& other) noexcept {
     }
 
     return *this;
+}
+
+uint32_t DeviceContext::getRtCoreVersion() const {
+    uint32_t version = 0;
+    CHECK_OPTIX(
+        optixDeviceContextGetProperty(m_handle, OPTIX_DEVICE_PROPERTY_RTCORE_VERSION, &version, sizeof(version)));
+    return version;
 }
 
 } // namespace optix

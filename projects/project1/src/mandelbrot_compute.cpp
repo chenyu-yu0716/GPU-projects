@@ -14,11 +14,12 @@ struct CameraState {
     HighPrecisionFloat zoom{};
 };
 
-static CameraState cameraAtTime(double timeSeconds,
-                                HighPrecisionComplex const& startCenter,
-                                HighPrecisionFloat const& startZoom,
-                                HighPrecisionComplex const& finalCenter,
-                                HighPrecisionFloat const& finalZoom) {
+static CameraState cameraAtTime(
+    double timeSeconds,
+    HighPrecisionComplex const& startCenter,
+    HighPrecisionFloat const& startZoom,
+    HighPrecisionComplex const& finalCenter,
+    HighPrecisionFloat const& finalZoom) {
     HighPrecisionComplex const initialCenter = startCenter;
     HighPrecisionFloat const initialZoom = startZoom;
     HighPrecisionComplex const targetCenter = finalCenter;
@@ -50,12 +51,13 @@ static CameraState cameraAtTime(double timeSeconds,
     return camera;
 }
 
-MandelbrotCompute::MandelbrotCompute(int framebufferWidth,
-                                     int framebufferHeight,
-                                     HighPrecisionComplex const& startCenter,
-                                     HighPrecisionFloat const& startZoom,
-                                     HighPrecisionComplex const& finalCenter,
-                                     HighPrecisionFloat const& finalZoom)
+MandelbrotCompute::MandelbrotCompute(
+    int framebufferWidth,
+    int framebufferHeight,
+    HighPrecisionComplex const& startCenter,
+    HighPrecisionFloat const& startZoom,
+    HighPrecisionComplex const& finalCenter,
+    HighPrecisionFloat const& finalZoom)
     : m_startCenter(startCenter)
     , m_startZoom(startZoom)
     , m_finalCenter(finalCenter)
@@ -71,12 +73,13 @@ void MandelbrotCompute::setReferenceViewport(int framebufferWidth, int framebuff
     m_referenceHeight = framebufferHeight;
 }
 
-MandelbrotCompute::FrameInfo MandelbrotCompute::render(float4* output,
-                                                       int framebufferWidth,
-                                                       int framebufferHeight,
-                                                       double timeSeconds,
-                                                       bool antialias,
-                                                       Palette const& palette) const {
+MandelbrotCompute::FrameInfo MandelbrotCompute::render(
+    float4* output,
+    int framebufferWidth,
+    int framebufferHeight,
+    double timeSeconds,
+    bool antialias,
+    Palette const& palette) const {
     if (framebufferWidth != m_referenceWidth || framebufferHeight != m_referenceHeight) {
         throw std::logic_error("Reference data does not match framebuffer dimensions");
     }
