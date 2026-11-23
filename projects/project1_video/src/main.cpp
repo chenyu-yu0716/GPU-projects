@@ -13,7 +13,7 @@
 #include <vector>
 
 #include <common/timer.h>
-#include <gpu/buffer.h>
+#include <gpu/buffer/buffer.h>
 #include <gpu/utility.h>
 
 #include <mandelbrot_compute.h>
